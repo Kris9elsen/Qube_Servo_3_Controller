@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<link name="pendulum_link">
+
+  <visual>
+    <origin xyz="0 0 ${pendulum_length/2}"/>
+    <geometry>
+      <cylinder radius="${pendulum_radius}" length="${pendulum_length}"/>
+    </geometry>
+  </visual>
+
+  <collision>
+    <origin xyz="0 0 ${pendulum_length/2}"/>
+    <geometry>
+      <cylinder radius="${pendulum_radius}" length="${pendulum_length}"/>
+    </geometry>
+  </collision>
+
+  <xacro:simple_inertia mass="${pendulum_mass}"/>
+
+</link>
+
+</robot>

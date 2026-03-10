@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot name="qube_servo_3" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<!-- constants -->
+<xacro:include filename="$(find pendulum_control)/urdf/qube_constants.xacro"/>
+
+<!-- macros -->
+<xacro:include filename="$(find pendulum_control)/urdf/macros/inertia_macros.xacro"/>
+
+<!-- links -->
+<xacro:include filename="$(find pendulum_control)/urdf/links/base_link.xacro"/>
+<xacro:include filename="$(find pendulum_control)/urdf/links/rotor_link.xacro"/>
+<xacro:include filename="$(find pendulum_control)/urdf/links/pendulum_link.xacro"/>
+
+<!-- joints -->
+<xacro:include filename="$(find pendulum_control)/urdf/joints/rotor_joint.xacro"/>
+<xacro:include filename="$/find pendulum_control)/urdf/joints/pendulum_joint.xacro"/>
+
+</robot>
+
