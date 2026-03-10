@@ -1,10 +1,18 @@
-$$    \left(\begin{array}{c} \mathrm{dw}_{1}\,\left(i_{1}+m_{2}\,\left({\mathrm{Lp}}^2+\frac{\sin\left(\theta _{2}\right)\,{\mathrm{Lr}}^2}{4}\right)\right)=\tau \\ -\frac{m_{2}\,\cos\left(\theta _{2}\right)\,{\mathrm{Lr}}^2\,{w_{1}}^2}{8}+\mathrm{dw}_{2}\,i_{2}+g\,m_{2}\,\sin\left(\theta _{2}\right)=0 \end{array}\right)
-$$
-
+Udregnet i matlab:
+$A = \sqrt{L_{p}^{2}+ \frac {L_{r}^{2}\sin(\theta_{2})^{2}} {4}}$
 $$\begin{align*}
-\dot{w_{1}} \cdot \left (J_{1}+m_{2} \cdot \left (L_{p}^{2}+ \frac {\sin(\theta_{2} L_{r}^{2})} {4} \right ) \right ) &= \tau\\
-- \frac {m_{2} \cos(\theta_{2})L_{r}^{2}\omega_{1}^{2} } {8} + \dot{w_{2}}J_{2}+ g m_{2}\sin(\theta_{2})&= 0
+(J_{1}+ m_{2}A) \ddot{\theta}_{1}+ \frac {L_{r}^{2}m_{2}\cos(\theta_{2})\sin(\theta_{2})\dot{\theta}_{1} \dot{\theta}_{2}}  {4 A} &= \tau\\
+J_{2} \ddot{\theta}_{2} + L_{r}gm_{2}\sin(\theta_{2})- \frac {L_{r}m_{2}\cos(\theta_{2})\sin(\theta_{2}) \dot{\theta}_{1}^{2}} {8 A} &= 0
 \end{align*}$$
-
-
-$$\dot{w_{1}} \cdot \left (J_{1}+m_{2} \cdot \left (L_{p}^{2}+ \frac {\sin(\theta_{2} L_{r}^{2})} {4} \right ) \right ) = \tau$$
+her lineariserer vi så omkring:
+$$\begin{align*}
+\cos(\theta_{2})&=  -1\\
+\sin(\theta_{2})&= -\theta\\
+\dot{\theta}_{1}^{2}&= \dot{\theta_{1}}
+\end{align*}$$
+her får vi så:
+$$\begin{align*}
+(J_{1}+ m_{2}A) \ddot{\theta}_{1}+ \frac {L_{r}^{2}m_{2}\theta_{2}\dot{\theta}_{1} \dot{\theta}_{2}}  {4 A} &= \tau\\
+J_{2} \ddot{\theta}_{2} - L_{r}gm_{2}\theta_{2}- \frac {L_{r}m_{2}\theta_{2} \dot{\theta}_{1}} {8 A} &= 0
+\end{align*}$$
+$A = \sqrt{L_{p}^{2}+ \frac {L_{r}^{2}\theta_{2}} {4}}$
