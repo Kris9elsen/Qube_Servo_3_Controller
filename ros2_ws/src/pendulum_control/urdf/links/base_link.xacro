@@ -1,22 +1,29 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="htpp://www.ros.org/wiki/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="link_macros">
 
-<link name="base_link">
+  <xacro:macro name="base_link" params="base_size base_height base_mass">
+    <link name="base_link">
 
-  <visual>
-    <geometry>
-      <box size="${base_size} ${base_size} ${base_height}"/>
-    </geometry>
-  </visual>
+      <!-- Visual -->
+      <visual>
+        <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${base_size} ${base_size} ${base_height}"/>
+        </geometry>
+      </visual>
 
-  <collision>
-    <geometry>
-      <box size="${base_size} ${base_size} ${base_height}"/>
-    </geometry>
-  </collision>
+      <!-- Collision -->
+      <collision>
+        <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${base_size} ${base_size} ${base_height}"/>
+        </geometry>
+      </collision>
 
-  <xacro:simple_inertia mass="${base_mass}"/>
+      <!-- Inertia -->
+      <xacro:base_inertia mass="${base_mass}"/>
 
-</link>
+    </link>
+  </xacro:macro>
 
 </robot>

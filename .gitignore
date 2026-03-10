@@ -1,1 +1,4 @@
 equations/.obsidian
+build/
+install/
+log/

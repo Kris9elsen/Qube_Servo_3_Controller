@@ -1,20 +1,43 @@
 <?xml version="1.0"?>
 <robot name="qube_servo_3" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-<!-- constants -->
-<xacro:include filename="$(find pendulum_control)/urdf/qube_constants.xacro"/>
+  <!-- constants -->
+  <xacro:include filename="$(find pendulum_control)/urdf/qube_constants.xacro"/>
 
-<!-- macros -->
-<xacro:include filename="$(find pendulum_control)/urdf/macros/inertia_macros.xacro"/>
+  <!-- inertias -->
+  <xacro:include filename="$(find pendulum_control)/urdf/macros/inertia_macros.xacro"/>
 
-<!-- links -->
-<xacro:include filename="$(find pendulum_control)/urdf/links/base_link.xacro"/>
-<xacro:include filename="$(find pendulum_control)/urdf/links/rotor_link.xacro"/>
-<xacro:include filename="$(find pendulum_control)/urdf/links/pendulum_link.xacro"/>
+  <!-- links -->
+  <xacro:include filename="$(find pendulum_control)/urdf/links/world.xacro"/>
+  <xacro:include filename="$(find pendulum_control)/urdf/links/base_link.xacro"/>
+  <xacro:include filename="$(find pendulum_control)/urdf/links/rotor_link.xacro"/>
+  <xacro:include filename="$(find pendulum_control)/urdf/links/pendulum_link.xacro"/>
 
-<!-- joints -->
-<xacro:include filename="$(find pendulum_control)/urdf/joints/rotor_joint.xacro"/>
-<xacro:include filename="$/find pendulum_control)/urdf/joints/pendulum_joint.xacro"/>
+  <!-- joints -->
+  <xacro:include filename="$(find pendulum_control)/urdf/joints/base_joint.xacro"/>
+  <xacro:include filename="$(find pendulum_control)/urdf/joints/rotor_joint.xacro"/>
+  <xacro:include filename="$(find pendulum_control)/urdf/joints/pendulum_joint.xacro"/>
+
+  <!-- expand macros with parameters -->
+  <xacro:world/>
+
+  <xacro:base_link 
+      base_size="${base_size}" 
+      base_height="${base_height}" 
+      base_mass="${base_mass}"/>
+
+  <xacro:rotor_link 
+      rotor_radius="${rotor_radius}" 
+      rotor_length="${rotor_length}" 
+      rotor_mass="${rotor_mass}"/>
+
+  <xacro:pendulum_link 
+      pendulum_radius="${pendulum_radius}" 
+      pendulum_length="${pendulum_length}" 
+      pendulum_mass="${pendulum_mass}"/>
+
+  <xacro:base_joint/>
+  <xacro:rotor_joint/>
+  <xacro:pendulum_joint/>
 
 </robot>
-
