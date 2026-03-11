@@ -18,7 +18,7 @@
   <xacro:include filename="$(find pendulum_control)/urdf/joints/rotor_joint.xacro"/>
   <xacro:include filename="$(find pendulum_control)/urdf/joints/pendulum_joint.xacro"/>
 
-  <!-- expand macros with parameters -->
+  <!-- links -->
   <xacro:world/>
 
   <xacro:base_link 
@@ -37,8 +37,51 @@
       pendulum_length="${pendulum_length}" 
       pendulum_mass="${pendulum_mass}"/>
 
+  <!-- joints -->
   <xacro:base_joint/>
   <xacro:rotor_joint/>
   <xacro:pendulum_joint/>
+
+  <!-- ros2 controll hardware interface -->
+  <ros2_control name="GazeboSystem" type="System">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+    <joint name="rotor_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="pendulum_joint">
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <!-- gazebo plugins -->
+  <gazebo>
+    <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find pendulum_control)/config/controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+  <!-- gazebo materials -->
+  <gazebo reference="base_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+  <gazebo reference="rotor_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+  <gazebo reference="pendulum_link">
+    <material>Gazebo/Orange</material>
+  </gazebo>
+
+  <!-- joint dynamics -->
+  <gazebo reference="rotor_joint">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
+  <gazebo reference="pendulum_joint">
+    <implicitSpringDamper>true</implicitSpringDamper>
+  </gazebo>
 
 </robot>
