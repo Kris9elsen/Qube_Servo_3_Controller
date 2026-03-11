@@ -12,7 +12,7 @@
       <axis xyz="0 0 1"/>
 
       <limit effort="2" velocity="20"/>
-      <dynamics damping="0" friction="0"/>
+      <dynamics damping="${pendulum_damping}" friction="${pendulum_friction}"/>
 
     </joint>
   </xacro:macro>

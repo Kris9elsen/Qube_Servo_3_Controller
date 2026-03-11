@@ -13,7 +13,7 @@
 
       <limit effort="2" velocity="20" lower="-1.5708" upper="1.5708"/>
 
-      <dynamics damping="0.05" friction="0.01"/>
+      <dynamics damping="${rotor_damping}" friction="${rotor_friction}"/>
 
     </joint>
   </xacro:macro>
