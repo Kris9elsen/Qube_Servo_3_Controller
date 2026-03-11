@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="link_macros">
 
-  <xacro:macro name="base_link" params="base_size base_height base_mass">
+  <xacro:macro name="base_link" params="base_width base_depth base_height base_mass">
     <link name="base_link">
 
       <!-- Visual -->
       <visual>
         <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
         <geometry>
-          <box size="${base_size} ${base_size} ${base_height}"/>
+          <box size="${base_width} ${base_depth} ${base_height}"/>
         </geometry>
       </visual>
 
@@ -16,7 +16,7 @@
       <collision>
         <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
         <geometry>
-          <box size="${base_size} ${base_size} ${base_height}"/>
+          <box size="${base_width} ${base_depth} ${base_height}"/>
         </geometry>
       </collision>
 

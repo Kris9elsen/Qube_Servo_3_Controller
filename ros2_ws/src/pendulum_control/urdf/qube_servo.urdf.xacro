@@ -22,7 +22,8 @@
   <xacro:world/>
 
   <xacro:base_link 
-      base_size="${base_size}" 
+      base_width="${base_width}"
+      base_depth="${base_depth}"
       base_height="${base_height}" 
       base_mass="${base_mass}"/>
 

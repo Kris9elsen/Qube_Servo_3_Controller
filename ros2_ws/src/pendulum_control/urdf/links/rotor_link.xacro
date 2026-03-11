@@ -6,15 +6,18 @@
 
       <!-- Visual -->
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="${rotor_length/2} 0 0" rpy="0 1.5708 0"/>
         <geometry>
           <cylinder radius="${rotor_radius}" length="${rotor_length}"/>
         </geometry>
+        <material name="green">
+          <color rgba="0 1 0 0.8"/>
+        </material>
       </visual>
 
       <!-- Collision -->
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 1.5708 0"/>
         <geometry>
           <cylinder radius="${rotor_radius}" length="${rotor_length}"/>
         </geometry>
