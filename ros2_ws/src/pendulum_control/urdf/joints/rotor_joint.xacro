@@ -1,17 +1,19 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="joint_macros">
 
-<joint name="rotor_joint" type="revolute">
+  <xacro:macro name="rotor_joint" params="">
+    <joint name="rotor_joint" type="revolute">
 
-  <parent link="base_link"/>
-  <child link="rotor_link"/>
+      <parent link="base_link"/>
+      <child link="rotor_link"/>
 
-  <origin xyz="0 0 0.058" rpy="0 0 0"/>
+      <origin xyz="0 0 ${base_height+rotor_radius}" rpy="0 0 0"/>
 
-  <axis xyz="0 0 1"/>
+      <axis xyz="0 0 1"/>
 
-  <limit effort="2" velocity="20" lower="-6.28" upper="6.28"/>
+      <limit effort="2" velocity="20" lower="-1.5708" upper="1.5708"/>
 
-</joint>
+    </joint>
+  </xacro:macro>
 
 </robot>

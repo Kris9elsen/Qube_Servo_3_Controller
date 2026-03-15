@@ -1,22 +1,32 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="htpp://www.ros.org/wiki/xacro">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="link_macros">
 
-<link name="rotor_link">
+  <xacro:macro name="rotor_link" params="rotor_radius rotor_length rotor_mass">
+    <link name="rotor_link">
 
-  <visual>
-    <geometry>
-      <cylinder radius="${rotor_radius}" length="${rotor_length}"/>
-    </geometry>
-  </visual>
+      <!-- Visual -->
+      <visual>
+        <origin xyz="${rotor_length/2} 0 0" rpy="0 1.5708 0"/>
+        <geometry>
+          <cylinder radius="${rotor_radius}" length="${rotor_length}"/>
+        </geometry>
+        <material name="green">
+          <color rgba="0 1 0 0.8"/>
+        </material>
+      </visual>
 
-  <collision>
-    <geometry>
-      <cylinder radius="${rotor_radius}" length="${rotor_length}"/>
-    </geometry>
-  </collision>
+      <!-- Collision -->
+      <collision>
+        <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+        <geometry>
+          <cylinder radius="${rotor_radius}" length="${rotor_length}"/>
+        </geometry>
+      </collision>
 
-  <xacro:simple_inertia mass="${rotor_mass}"/>
+      <!-- Inertia -->
+      <xacro:cyl_inertia mass="${rotor_mass}" radius="${rotor_radius}" length="${rotor_length}"/>
 
-</link>
+    </link>
+  </xacro:macro>
 
 </robot>
