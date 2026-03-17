@@ -8,7 +8,7 @@
       <visual>
         <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
         <geometry>
-          <box size="${base_width} ${base_depth} ${base_height}"/>
+          <box size="${base_depth} ${base_width} ${base_height}"/>
         </geometry>
       </visual>
 
