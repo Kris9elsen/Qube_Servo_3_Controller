@@ -33,6 +33,7 @@ install(DIRECTORY
   launch
   urdf
   rviz
+  worlds
   config
   DESTINATION share/${PROJECT_NAME}
 )
