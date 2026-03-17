@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="inertia_macros">
+
+ <xacro:macro name="cyl_inertia" params="mass radius length">
+    <inertial>
+      <mass value="${mass}"/>
+      <!-- COM at geometric center -->
+      <origin xyz="${length/2} 0 0" rpy="0 0 0"/>
+      <inertia
+        ixx="${(1/12.0)*mass*length*length + 0.25*mass*radius*radius}" 
+        ixy="0" ixz="0"
+        iyy="${(1/12.0)*mass*length*length + 0.25*mass*radius*radius}" 
+        iyz="0" 
+        izz="${0.5*mass*radius*radius}"/>
+    </inertial>
+  </xacro:macro> 
+  <xacro:macro name="base_inertia" params="mass">
+  <inertial>
+    <mass value="${mass}"/>
+    <origin xyz="0 0 ${mass/2}" rpy="0 0 0"/>
+    <inertia ixx="${mass/6}" ixy="0" ixz="0" iyy="${mass/6}" iyz="0" izz="${mass/6}"/>
+  </inertial>
+  </xacro:macro>
+
+</robot>

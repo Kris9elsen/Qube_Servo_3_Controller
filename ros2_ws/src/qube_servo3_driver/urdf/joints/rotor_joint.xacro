@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="joint_macros">
+
+  <xacro:macro name="rotor_joint" params="">
+    <joint name="rotor_joint" type="revolute">
+
+      <parent link="base_link"/>
+      <child link="rotor_link"/>
+
+      <origin xyz="0 0 ${base_height+rotor_radius}" rpy="0 0 0"/>
+
+      <axis xyz="0 0 1"/>
+
+      <limit effort="2" velocity="20" lower="-1.5708" upper="1.5708"/>
+
+      <dynamics damping="${rotor_damping}" friction="${rotor_friction}"/>
+
+    </joint>
+  </xacro:macro>
+
+</robot>

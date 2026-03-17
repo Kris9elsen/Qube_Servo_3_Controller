@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="joint_macros">
+
+  <xacro:macro name="pendulum_joint" params="">
+    <joint name="pendulum_joint" type="continuous">
+
+      <parent link="rotor_link"/>
+      <child link="pendulum_link"/>
+
+      <origin xyz="${rotor_length} 0 0" rpy="0 1.5708 0"/>
+
+      <axis xyz="0 0 1"/>
+
+      <limit effort="2" velocity="20"/>
+      <dynamics damping="${pendulum_damping}" friction="${pendulum_friction}"/>
+
+    </joint>
+  </xacro:macro>
+
+</robot>
