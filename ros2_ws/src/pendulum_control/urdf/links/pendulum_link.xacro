@@ -1,40 +1,37 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="link_macros">
 
-  <xacro:macro name="pendulum_link" params="pendulum_radius pendulum_length pendulum_mass">
+  <xacro:macro name="pendulum_link" params="">
     <link name="pendulum_link">
 
       <!-- Visual -->
       <visual>
-        <origin xyz="0 0 ${rotor_length/2}" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 -1.5708 0"/>
         <geometry>
-          <cylinder radius="${rotor_radius}" length="${rotor_length}"/>
-        </geometry>
-        <material name="green">
-          <color rgba="0 1 0 0.8"/>
-        </material>
-      </visual>
-
-      <visual>
-        <origin xyz="${pendulum_length/2-p_end_to_link-rotor_radius} 0 ${rotor_length-pendulum_radius/2}" rpy="0 1.5708 0"/>
-        <geometry>
-          <cylinder radius="${pendulum_radius}" length="${pendulum_length}"/>
+          <mesh filename="package://pendulum_control/urdf/mesh/pendulum.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="orange">
-          <color rbga="1 0.65 0 0.8"/>
+          <color rgba="1 0.65 0 0.8"/>
         </material>
       </visual>
 
       <!-- Collision -->
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 -1.5708 0"/>
         <geometry>
-          <cylinder radius="${pendulum_radius}" length="${pendulum_length}"/>
+          <mesh filename="package://pendulum_control/urdf/mesh/pendulum.stl" scale="0.001 0.001 0.001"/>
         </geometry>
       </collision>
 
       <!-- Inertia -->
-      <xacro:cyl_inertia mass="${pendulum_mass}" length="${pendulum_length}" radius="${pendulum_radius}"/>
+      <inertial>
+        <mass value="0.1"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0"
+                  iyy="0.001" iyz="0.0"
+                  izz="0.001"/>
+      </inertial>
+
 
     </link>
   </xacro:macro>
