@@ -118,17 +118,20 @@ bool QubeServo3Driver::initializeHardware()
         return false;
     }
     
-    // Set encoder quadrature mode for both encoders - FIXED
-    t_encoder_quadrature_mode modes[2] = {ENCODER_QUADRATURE_4X, ENCODER_QUADRATURE_4X};
-    result = hil_set_encoder_quadrature_mode(card_, encoder_channels_, 2, modes);
-    if (result != 0) {
-        handleQuanserError("hil_set_encoder_quadrature_mode", result);
-    }
+    
     
     // Reset encoders to zero
     
     // Initialize DAC to 0
     writeVoltage(0.0);
+
+    t_boolean enable_value[1] = {true};
+    result = hil_write_digital(card_, digital_out_channels_, 1, enable_value);
+    if (result != 0) {
+        handleQuanserError("hil_write_digital (enable amplifier)", result);
+    } else {
+        RCLCPP_INFO(this->get_logger(), "Motor amplifier enabled");
+    }
     
     hardware_initialized_ = true;
     RCLCPP_INFO(this->get_logger(), "Quanser hardware initialized successfully");
@@ -158,9 +161,9 @@ bool QubeServo3Driver::readEncoders()
     if (!hardware_initialized_) return false;
     
     t_error result;
-    t_int32 counts[2];  // Changed from t_uint32 to t_int32
+    t_int32 counts[2];
     
-    // Read both encoders using HIL API
+    // Read both encoders
     result = hil_read_encoder(card_, encoder_channels_, 2, counts);
     if (result != 0) {
         handleQuanserError("hil_read_encoder", result);
@@ -176,6 +179,13 @@ bool QubeServo3Driver::readEncoders()
     // Convert counts to radians
     state_.motor_position = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
     state_.pendulum_position = (static_cast<double>(counts[1]) / encoder_resolution_) * 2.0 * M_PI;
+    
+    // ALWAYS print encoder values for debugging (remove after fixing)
+    static int counter = 0;
+    if (counter++ % 50 == 0) {  // Print every 50 iterations
+        RCLCPP_INFO(this->get_logger(), "RAW ENCODER: motor=%d, pendulum=%d | POS: motor=%.4f, pendulum=%.4f",
+                    counts[0], counts[1], state_.motor_position, state_.pendulum_position);
+    }
     
     return true;
 }
@@ -207,7 +217,7 @@ void QubeServo3Driver::writeVoltage(double voltage)
     t_error result;
     
     // Clamp voltage to safe limits
-    voltage = std::clamp(voltage, -12.0, 12.0);
+    voltage = std::clamp(voltage, -10.0, 10.0);
     
     // Write to DAC using HIL API
     t_double voltages[1] = {voltage};
@@ -319,15 +329,20 @@ void QubeServo3Driver::controlLoop()
                             "Hardware not initialized");
         return;
     }
+
+    RCLCPP_INFO(this->get_logger(), "read encoders");
     
     // Read encoders
     if (!readEncoders()) {
         return;
     }
     
+    RCLCPP_INFO(this->get_logger(), "read current");
     // Read current sensor
     readCurrent();
     
+
+    RCLCPP_INFO(this->get_logger(), "calculate vel");
     // Calculate velocities
     calculateVelocities(dt);
     
@@ -335,6 +350,8 @@ void QubeServo3Driver::controlLoop()
     {
         std::lock_guard<std::mutex> lock(mutex_);
         double voltage = commanded_effort_ * effort_to_voltage_;
+
+        RCLCPP_INFO(this->get_logger(), "write vol");
         writeVoltage(voltage);
     }
     
@@ -350,6 +367,7 @@ void QubeServo3Driver::controlLoop()
         joint_state_msg.effort = {state_.motor_current * 0.1, 0.0};  // Approximate torque from current
     }
     
+    RCLCPP_INFO(this->get_logger(), "pub joint state");
     joint_state_pub_->publish(joint_state_msg);
     
     // Publish wrench data
@@ -360,6 +378,7 @@ void QubeServo3Driver::controlLoop()
         wrench_pub_->publish(wrench_msg);
     }
     
+    RCLCPP_INFO(this->get_logger(), "dumb stuff");
     prev_time_ = current_time;
 }
 

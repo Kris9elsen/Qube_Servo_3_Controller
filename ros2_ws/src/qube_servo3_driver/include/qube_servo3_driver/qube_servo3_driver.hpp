@@ -91,6 +91,7 @@ private:
     t_uint32 pwm_channels_[1];
     t_uint32 encoder_counts_[2];
     t_double adc_values_[1];
+    t_uint32 digital_out_channels_[1];
     
     // Hardware status
     bool hardware_initialized_;

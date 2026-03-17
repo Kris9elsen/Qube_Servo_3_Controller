@@ -41,7 +41,7 @@ def generate_launch_description():
         name="qube_servo3_driver",
         output="screen",
         parameters=[{
-            'board_type': 'q8_usb',
+            'board_type': 'qube_servo3_usb',
             'board_identifier': '0',
             'update_rate': 1000.0,
             'joint_names': ['rotor_joint', 'pendulum_joint'],
@@ -107,7 +107,7 @@ def generate_launch_description():
         joint_state_publisher_node,
         
         # Start diagnostic aggregator
-        diagnostic_node,
+        #diagnostic_node,
         
         # Wait for driver to initialize, then spawn controllers (like in simulation)
         TimerAction(period=2.0, actions=[joint_state_broadcaster_spawner]),
