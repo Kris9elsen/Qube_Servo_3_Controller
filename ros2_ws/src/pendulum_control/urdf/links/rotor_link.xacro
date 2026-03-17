@@ -1,11 +1,34 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="link_macros">
 
-  <xacro:macro name="rotor_link" params="rotor_radius rotor_length rotor_mass">
+  <xacro:macro name="rotor_link" params="">
     <link name="rotor_link">
 
+      <!-- Visual -->
+      <visual>
+        <origin xyz="0 0 ${-rotor_height-pendulum_height}" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://pendulum_control/urdf/mesh/rotor.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="red">
+          <color rgba="1 0 0 0.8"/>
+        </material>
+      </visual>
+
+      <!-- Collision -->
+      <Collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mesh filename="pakcage://pendulum_control/urdf/mesh/rotor.stl" scale="0.001 0.001 0.001"/>
+      </Collision>
+
       <!-- Inertia -->
-      <xacro:cyl_inertia mass="${rotor_mass}" radius="${rotor_radius}" length="${rotor_length}"/>
+      <inertial>
+        <mass value="0.1"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0"
+                  iyy="0.001" iyz="0.0"
+                  izz="0.001"/>
+      </inertial>
 
     </link>
   </xacro:macro>

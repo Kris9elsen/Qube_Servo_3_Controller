@@ -21,6 +21,12 @@ def generate_launch_description():
         "/opt/ros/jazzy/lib"
     )
 
+    # Resource for qube models in gazebo
+    set_gz_resource_path = SetEnvironmentVariable(
+        "GZ_SIM_RESOURCE_PATH",
+        os.path.join(pkg_path, "..")
+    )
+
     # Robot State Publisher node
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
@@ -93,6 +99,7 @@ def generate_launch_description():
     return LaunchDescription([
         set_gz_ip,
         set_gz_plugin_path,
+        set_gz_resource_path,
         robot_state_publisher_node,
         gazebo_server,
         ros_gz_bridge,
