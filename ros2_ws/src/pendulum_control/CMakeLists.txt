@@ -20,19 +20,12 @@ target_compile_features(classic PUBLIC c_std_99 cxx_std_17)  # Require C99 and C
 install(TARGETS classic
   DESTINATION lib/${PROJECT_NAME})
 
-install(
-  DIRECTORY launch
+install(DIRECTORY
+  launch
+  urdf
+  rviz
+  config
   DESTINATION share/${PROJECT_NAME}
-)
-
-install(
-  DIRECTORY launch urdf
-  DESTINATION share/${PROJECT_NAME}
-)
-
-install(
-  FILES rviz/config.rviz
-  DESTINATION share/${PROJECT_NAME}/rviz
 )
 
 if(BUILD_TESTING)
