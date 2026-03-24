@@ -53,7 +53,7 @@ private:
     std_msgs::msg::Float64MultiArray effort_msg;
     
     double theta1 = actual_positions_[0];
-    double error = (set_points_- 0.001 * theta1) - actual_positions_[1];
+    double error = (set_points_- 0.01 * theta1) - actual_positions_[1];
 
 
 
