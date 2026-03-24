@@ -1,27 +1,35 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="link_macros">
 
-  <xacro:macro name="base_link" params="base_width base_depth base_height base_mass">
+  <xacro:macro name="base_link" params="">
     <link name="base_link">
 
       <!-- Visual -->
       <visual>
-        <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <box size="${base_width} ${base_depth} ${base_height}"/>
+          <mesh filename="package://pendulum_control/urdf/mesh/base.stl" scale="0.001 0.001 0.001"/>
         </geometry>
+        <material name="green">
+          <color rgba="0 1 0 0.8"/>
+        </material>
       </visual>
 
       <!-- Collision -->
       <collision>
-        <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <box size="${base_width} ${base_depth} ${base_height}"/>
+          <mesh filename="package://pendulum_control/urdf/mesh/base.stl" scale="0.001 0.001 0.001"/>
         </geometry>
       </collision>
 
       <!-- Inertia -->
-      <xacro:base_inertia mass="${base_mass}"/>
+      <xacro:base_inertia
+        mass="${base_mass}"
+        depth="${base_depth}"
+        width="${base_width}"
+        height="${base_height}"
+      />
 
     </link>
   </xacro:macro>

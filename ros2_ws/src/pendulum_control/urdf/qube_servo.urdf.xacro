@@ -20,22 +20,9 @@
 
   <!-- links -->
   <xacro:world/>
-
-  <xacro:base_link 
-      base_width="${base_width}"
-      base_depth="${base_depth}"
-      base_height="${base_height}" 
-      base_mass="${base_mass}"/>
-
-  <xacro:rotor_link 
-      rotor_radius="${rotor_radius}" 
-      rotor_length="${rotor_length}" 
-      rotor_mass="${rotor_mass}"/>
-
-  <xacro:pendulum_link 
-      pendulum_radius="${pendulum_radius}" 
-      pendulum_length="${pendulum_length}" 
-      pendulum_mass="${pendulum_mass}"/>
+  <xacro:base_link/>
+  <xacro:rotor_link/>
+  <xacro:pendulum_link/>
 
   <!-- joints -->
   <xacro:base_joint/>
@@ -67,10 +54,10 @@
 
   <!-- gazebo materials -->
   <gazebo reference="base_link">
-    <material>Gazebo/Red</material>
+    <material>Gazebo/Green</material>
   </gazebo>
   <gazebo reference="rotor_link">
-    <material>Gazebo/Green</material>
+    <material>Gazebo/Red</material>
   </gazebo>
   <gazebo reference="pendulum_link">
     <material>Gazebo/Orange</material>

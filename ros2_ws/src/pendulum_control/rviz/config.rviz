@@ -8,8 +8,6 @@ Panels:
         - /Status1
         - /RobotModel1
         - /RobotModel1/Links1
-        - /RobotModel1/Links1/base_link1
-        - /RobotModel1/Links1/pendulum_link1
         - /RobotModel1/Links1/rotor_link1
       Splitter Ratio: 0.5
     Tree Height: 494
@@ -72,17 +70,17 @@ Visualization Manager:
         Link Tree Style: Links in Alphabetic Order
         base_link:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         pendulum_link:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         rotor_link:
           Alpha: 1
-          Show Axes: true
+          Show Axes: false
           Show Trail: false
           Value: true
         world:
@@ -143,7 +141,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 0.8922269344329834
+      Distance: 0.34985360503196716
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -158,10 +156,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.13539829850196838
+      Pitch: 0.3753982186317444
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.9003978967666626
+      Yaw: 1.5603972673416138
     Saved: ~
 Window Geometry:
   Displays:

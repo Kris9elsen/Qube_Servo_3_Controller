@@ -8,6 +8,7 @@ import os
 def generate_launch_description():
     pkg_path = FindPackageShare("pendulum_control").find("pendulum_control")
     rviz_config_file = os.path.join(pkg_path, "rviz", "config.rviz")
+    world_file = os.path.join(pkg_path, "worlds", "world.sdf")
     xacro_file = os.path.join(pkg_path, "urdf", "qube_servo.urdf.xacro")
 
     # Generate robot_description urdf from xacro
@@ -20,17 +21,23 @@ def generate_launch_description():
         "/opt/ros/jazzy/lib"
     )
 
+    # Resource for qube models in gazebo
+    set_gz_resource_path = SetEnvironmentVariable(
+        "GZ_SIM_RESOURCE_PATH",
+        os.path.join(pkg_path, "..")
+    )
+
     # Robot State Publisher node
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="screen",
-        parameters=[robot_description]
+        parameters=[robot_description, {"use_sim_time": True}]
     )
 
     # Gazebo Server
     gazebo_server = ExecuteProcess(
-        cmd=["gz", "sim", "-s", "-r", "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz/gz-sim8/worlds/empty.sdf"],
+        cmd=["gz", "sim", "-s", "-r", world_file],
         output="screen"
     )
 
@@ -68,7 +75,7 @@ def generate_launch_description():
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster"],
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager", "--unload-on-kill",],
         output="screen"
     )
 
@@ -76,7 +83,7 @@ def generate_launch_description():
     effort_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["effort_controller"],
+        arguments=["effort_controller", "--controller-manager", "/controller_manager", "--unload-on-kill",],
         output="screen"
     )
 
@@ -89,15 +96,31 @@ def generate_launch_description():
         arguments=["-d", rviz_config_file]
     )
 
+    # PID Control Node
+    pid_control_node = Node(
+        package="pendulum_control",
+        executable="control",
+        name="pid_controller",
+        parameters=[{
+            "pos" : 3.14,
+            "kp" : 1.0,
+            "ki" : 0.5,
+            "kd" : 0.1,
+        }],
+        arguments=["--ros-args", "-p", "use_sim_time:=true"]
+    )
+
     return LaunchDescription([
         set_gz_ip,
         set_gz_plugin_path,
+        set_gz_resource_path,
         robot_state_publisher_node,
         gazebo_server,
         ros_gz_bridge,
         TimerAction(period=2.0, actions=[gazebo_gui]),
         TimerAction(period=4.0, actions=[spawn_robot]),
-        TimerAction(period=6.0, actions=[joint_state_broadcaster_spawner]),
-        TimerAction(period=7.0, actions=[effort_controller_spawner]),
+        TimerAction(period=10.0, actions=[joint_state_broadcaster_spawner]),
+        TimerAction(period=12.0, actions=[effort_controller_spawner]),
+        TimerAction(period=13.0, actions=[pid_control_node]),
         rviz_node,
     ])
