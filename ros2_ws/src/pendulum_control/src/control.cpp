@@ -54,6 +54,10 @@ private:
 
     double error = set_points_ - actual_positions_[1];
 
+
+    double theta1 = actual_positions_[0];
+    error += 0.1 * theta1; // Coupling term to stabilize the first joint
+
     // Propotional
     double p_term = kp_ * error;
 
