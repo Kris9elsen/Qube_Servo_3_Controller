@@ -32,7 +32,7 @@ def generate_launch_description():
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="screen",
-        parameters=[robot_description]
+        parameters=[robot_description, {"use_sim_time": True}]
     )
 
     # Gazebo Server
@@ -75,7 +75,7 @@ def generate_launch_description():
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster"],
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager", "--unload-on-kill",],
         output="screen"
     )
 
@@ -83,7 +83,7 @@ def generate_launch_description():
     effort_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["effort_controller"],
+        arguments=["effort_controller", "--controller-manager", "/controller_manager", "--unload-on-kill",],
         output="screen"
     )
 
@@ -96,6 +96,20 @@ def generate_launch_description():
         arguments=["-d", rviz_config_file]
     )
 
+    # PID Control Node
+    pid_control_node = Node(
+        package="pendulum_control",
+        executable="control",
+        name="pid_controller",
+        parameters=[{
+            "pos" : 3.14,
+            "kp" : 1.0,
+            "ki" : 0.5,
+            "kd" : 0.1,
+        }],
+        arguments=["--ros-args", "-p", "use_sim_time:=true"]
+    )
+
     return LaunchDescription([
         set_gz_ip,
         set_gz_plugin_path,
@@ -105,7 +119,8 @@ def generate_launch_description():
         ros_gz_bridge,
         TimerAction(period=2.0, actions=[gazebo_gui]),
         TimerAction(period=4.0, actions=[spawn_robot]),
-        TimerAction(period=6.0, actions=[joint_state_broadcaster_spawner]),
-        TimerAction(period=7.0, actions=[effort_controller_spawner]),
+        TimerAction(period=10.0, actions=[joint_state_broadcaster_spawner]),
+        TimerAction(period=12.0, actions=[effort_controller_spawner]),
+        TimerAction(period=13.0, actions=[pid_control_node]),
         rviz_node,
     ])

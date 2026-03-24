@@ -1,0 +1,12 @@
+qube_servo3_driver:
+  ros__parameters:
+    board_type: "q8_usb"
+    board_identifier: "0"
+    update_rate: 1000.0
+    joint_names: ["motor", "pendulum"]
+    encoder_resolution: 4096.0
+    max_effort: 1.5
+    effort_to_voltage: 1.0
+    filter_alpha: 0.1
+    current_sensor_gain: 0.1
+    enable_diagnostics: true
