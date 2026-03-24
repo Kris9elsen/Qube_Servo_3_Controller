@@ -6,11 +6,11 @@ from launch_ros.substitutions import FindPackageShare
 import os
 
 def generate_launch_description():
-    pkg_path     = FindPackageShare("pendulum_control").find("pendulum_control")
-    driver_path  = FindPackageShare("qube_servo3_driver").find("qube_servo3_driver")
+    pkg_path    = FindPackageShare("pendulum_control").find("pendulum_control")
+    driver_path = FindPackageShare("qube_servo3_driver").find("qube_servo3_driver")
 
     rviz_config_file = os.path.join(pkg_path, "rviz", "config.rviz")
-    xacro_file       = os.path.join(driver_path, "urdf", "qube_servo3_real.urdf.xacro")
+    xacro_file       = os.path.join(pkg_path, "urdf", "qube_servo.urdf.xacro")
 
     robot_description = {"robot_description": Command(["xacro ", xacro_file])}
 
@@ -36,16 +36,17 @@ def generate_launch_description():
         name="qube_servo3_driver",
         output="screen",
         parameters=[{
-            'board_type': 'qube_servo3_usb',
-            'board_identifier': '0',
-            'update_rate': 1000.0,
-            'joint_names': ['rotor_joint', 'pendulum_joint'],
-            'encoder_resolution': 4096.0,
-            'max_effort': 1.5,
-            'effort_to_voltage': 1.0,
-            'filter_alpha': 0.1,
-            'current_sensor_gain': 0.1,
-            'enable_diagnostics': True,
+            'board_type':                  'qube_servo3_usb',
+            'board_identifier':            '0',
+            'update_rate':                 1000.0,
+            'joint_names':                 ['rotor_joint', 'pendulum_joint'],
+            'encoder_resolution':          2048.0,
+            'pendulum_encoder_resolution': 2048.0,
+            'max_effort':                  1.5,
+            'effort_to_voltage':           1.0,
+            'filter_alpha':                0.1,
+            'current_sensor_gain':         0.1,
+            'enable_diagnostics':          True,
         }]
     )
 
@@ -63,11 +64,10 @@ def generate_launch_description():
         name="pid_controller",
         parameters=[{
             "pos": 3.14,
-            "kp": 1.0,
-            "ki": 0.5,
-            "kd": 0.1,
+            "kp":  60.0,
+            "ki":  12.0,
+            "kd":  0.5,
         }]
-        # note: use_sim_time removed — running on real hardware
     )
 
     return LaunchDescription([
@@ -75,7 +75,5 @@ def generate_launch_description():
         joint_state_publisher_node,
         qube_driver_node,
         rviz_node,
-
-        # Give the driver time to initialize before starting the controller
         TimerAction(period=2.0, actions=[pid_control_node]),
     ])

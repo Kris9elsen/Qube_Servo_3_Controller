@@ -19,7 +19,7 @@ public:
 
     // Control loop
     timer_ = this->create_wall_timer(
-        std::chrono::milliseconds(20), 
+        std::chrono::milliseconds(1), 
         std::bind(&PID_Controller::control_loop, this));
 
     // Target position
@@ -63,7 +63,7 @@ private:
 
     // Integral width anti windup
     integral_ += error * dt;
-    integral_ = std::clamp(integral_, -10.0, 10.0);
+    integral_ = std::clamp(integral_, -5.0, 5.0);
     double i_term = ki_ * integral_;
 
     // Derivative

@@ -161,7 +161,7 @@ bool QubeServo3Driver::readEncoders()
 
     // Use separate resolution for pendulum encoder, and wrap to [-pi, pi]
     double raw_pendulum = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
-    state_.pendulum_position = std::remainder(raw_pendulum, 2.0 * M_PI);
+    state_.pendulum_position = std::remainder(raw_pendulum - M_PI, 2.0 * M_PI) + M_PI;
     
     return true;
 }
@@ -285,7 +285,7 @@ void QubeServo3Driver::controlLoop()
     double voltage;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        voltage = commanded_effort_ * effort_to_voltage_;
+        voltage = -commanded_effort_ * effort_to_voltage_;
     }
     writeVoltage(voltage);
 
