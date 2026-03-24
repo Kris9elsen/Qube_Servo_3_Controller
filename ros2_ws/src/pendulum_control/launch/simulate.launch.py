@@ -8,6 +8,7 @@ import os
 def generate_launch_description():
     pkg_path = FindPackageShare("pendulum_control").find("pendulum_control")
     rviz_config_file = os.path.join(pkg_path, "rviz", "config.rviz")
+    world_file = os.path.join(pkg_path, "worlds", "world.sdf")
     xacro_file = os.path.join(pkg_path, "urdf", "qube_servo.urdf.xacro")
 
     # Generate robot_description urdf from xacro
@@ -20,6 +21,12 @@ def generate_launch_description():
         "/opt/ros/jazzy/lib"
     )
 
+    # Resource for qube models in gazebo
+    set_gz_resource_path = SetEnvironmentVariable(
+        "GZ_SIM_RESOURCE_PATH",
+        os.path.join(pkg_path, "..")
+    )
+
     # Robot State Publisher node
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
@@ -30,7 +37,7 @@ def generate_launch_description():
 
     # Gazebo Server
     gazebo_server = ExecuteProcess(
-        cmd=["gz", "sim", "-s", "-r", "/opt/ros/jazzy/opt/gz_sim_vendor/share/gz/gz-sim8/worlds/empty.sdf"],
+        cmd=["gz", "sim", "-s", "-r", world_file],
         output="screen"
     )
 
@@ -92,6 +99,7 @@ def generate_launch_description():
     return LaunchDescription([
         set_gz_ip,
         set_gz_plugin_path,
+        set_gz_resource_path,
         robot_state_publisher_node,
         gazebo_server,
         ros_gz_bridge,

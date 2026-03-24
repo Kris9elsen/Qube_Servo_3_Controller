@@ -5,14 +5,16 @@
   <xacro:property name="base_depth" value="0.117"/>
   <xacro:property name="base_mass" value="0.5"/>
 
-  <xacro:property name="rotor_radius" value="0.01"/>
-  <xacro:property name="rotor_length" value="0.085"/>
+  <xacro:property name="rotor_radius" value="0.00325"/>
+  <xacro:property name="rotor_height" value="0.0104"/>
   <xacro:property name="rotor_mass" value="0.095"/>
   <xacro:property name="rotor_friction" value="0"/>
-  <xacro:property name="rotor_damping" value="0"/>
+  <xacro:property name="rotor_damping" value="0.0001"/>
 
-  <xacro:property name="pendulum_radius" value="0.005"/>
+  <xacro:property name="pendulum_radius" value="0.0048"/>
   <xacro:property name="pendulum_length" value="0.129"/>
+  <xacro:property name="pendulum_height" value="0.01042"/>
+  <xacro:property name="p_end_to_link" value="0.005"/>
   <xacro:property name="pendulum_mass" value="0.024"/>
   <xacro:property name="pendulum_friction" value="0"/>
   <xacro:property name="pendulum_damping" value="0.0001"/>
