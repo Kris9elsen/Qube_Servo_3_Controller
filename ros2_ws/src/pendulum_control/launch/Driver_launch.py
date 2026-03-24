@@ -42,7 +42,7 @@ def generate_launch_description():
             'joint_names':                 ['rotor_joint', 'pendulum_joint'],
             'encoder_resolution':          2048.0,
             'pendulum_encoder_resolution': 2048.0,
-            'max_effort':                  1.5,
+            'max_effort':                  3.5,
             'effort_to_voltage':           1.0,
             'filter_alpha':                0.1,
             'current_sensor_gain':         0.1,
@@ -63,10 +63,12 @@ def generate_launch_description():
         executable="control",
         name="pid_controller",
         parameters=[{
-            "pos": 3.14,
-            "kp":  60.0,
-            "ki":  12.0,
-            "kd":  0.5,
+            "pos": 3.14159,
+            "kp":  15.0,
+            "ki":  0.0,
+            "kd":  1.0,
+            "km": 0.5,
+            "kmd": 0.2,
         }]
     )
 

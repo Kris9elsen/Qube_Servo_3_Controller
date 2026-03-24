@@ -9,6 +9,8 @@ public:
     kp_ = this->declare_parameter("kp", 10.0);
     ki_ = this->declare_parameter("ki", 0.5);
     kd_ = this->declare_parameter("kd", 0.1);
+    km_ = this->declare_parameter("km", 0.05);
+    kmd_ = this->declare_parameter("kmd", 0.01);
 
     joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
         "/joint_states", 10,
@@ -53,9 +55,16 @@ private:
     std_msgs::msg::Float64MultiArray effort_msg;
     
     double theta1 = actual_positions_[0];
-    double error = (set_points_- 0.01 * theta1) - actual_positions_[1];
+    double error = set_points_ - actual_positions_[1];
 
-
+    
+    if (index % 1 == 0)
+    {
+      m_term = (- km_ * theta1);
+      md_term = (- kmd_ * actual_velocities_[0]);
+    }
+    index++;
+    
 
     // Propotional
     double p_term = kp_ * error;
@@ -67,17 +76,22 @@ private:
 
     // Derivative
     double derivative = (error - prev_error_) / dt;
-    double d_term = kd_ * actual_velocities_[1]; // Using actual velocity for derivative term
+    double d_term = kd_ * -actual_velocities_[1]; // Using actual velocity for derivative term
 
     prev_error_ = error;
 
-    effort_msg.data.push_back(p_term + i_term + d_term);
+    effort_msg.data.push_back(p_term + i_term + d_term + m_term + md_term);
 
     effort_pub_->publish(effort_msg);
   }
 
   // PID gains
-  double kp_, ki_, kd_;
+  double kp_, ki_, kd_, km_, kmd_;
+
+  double m_term = 0;
+  double md_term = 0;
+
+  int index = 0;
 
   // State
   double set_points_;
