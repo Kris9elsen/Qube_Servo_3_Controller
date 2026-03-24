@@ -12,6 +12,11 @@
 #include <cmath>
 #include <iomanip>
 
+// std_msgs/Float64MultiArray is what ros2_control's effort_controller publishes.
+// std_msgs/Float64 is used as a fallback for direct publishing.
+// We subscribe to Float64MultiArray to be compatible with both the sim PID node and direct commands.
+#include <std_msgs/msg/float64_multi_array.hpp>
+
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
@@ -68,7 +73,8 @@ void QubeServo3Driver::declareParameters()
     this->declare_parameter<std::string>("board_identifier", "0");
     this->declare_parameter<double>("update_rate", 1000.0);
     this->declare_parameter<std::vector<std::string>>("joint_names", {"motor", "pendulum"});
-    this->declare_parameter<double>("encoder_resolution", 4096.0);
+    this->declare_parameter<double>("encoder_resolution", 4096.0);         // motor encoder counts/rev
+    this->declare_parameter<double>("pendulum_encoder_resolution", 2048.0); // pendulum encoder counts/rev
     this->declare_parameter<double>("max_effort", 1.5);
     this->declare_parameter<double>("effort_to_voltage", 1.0);
     this->declare_parameter<double>("filter_alpha", 0.1);
@@ -80,6 +86,7 @@ void QubeServo3Driver::declareParameters()
     this->get_parameter("update_rate", update_rate_);
     this->get_parameter("joint_names", joint_names_);
     this->get_parameter("encoder_resolution", encoder_resolution_);
+    this->get_parameter("pendulum_encoder_resolution", pendulum_encoder_resolution_);
     this->get_parameter("max_effort", max_effort_);
     this->get_parameter("effort_to_voltage", effort_to_voltage_);
     this->get_parameter("filter_alpha", filter_alpha_);
@@ -151,7 +158,10 @@ bool QubeServo3Driver::readEncoders()
     state_.encoder_counts[0] = counts[0];
     state_.encoder_counts[1] = counts[1];
     state_.motor_position    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
-    state_.pendulum_position = (static_cast<double>(counts[1]) / encoder_resolution_) * 2.0 * M_PI;
+
+    // Use separate resolution for pendulum encoder, and wrap to [-pi, pi]
+    double raw_pendulum = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
+    state_.pendulum_position = std::remainder(raw_pendulum, 2.0 * M_PI);
     
     return true;
 }
@@ -202,16 +212,18 @@ void QubeServo3Driver::setupInterfaces()
             "/diagnostics", rclcpp::QoS(10).reliable());
     }
     
-    effort_sub_ = this->create_subscription<std_msgs::msg::Float64>(
+    effort_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
         "/effort_controller/commands", 
         rclcpp::QoS(10).reliable(),
         std::bind(&QubeServo3Driver::effortCallback, this, _1));
 }
 
-void QubeServo3Driver::effortCallback(const std_msgs::msg::Float64::SharedPtr msg)
+void QubeServo3Driver::effortCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
+    if (msg->data.empty()) return;
     std::lock_guard<std::mutex> lock(mutex_);
-    commanded_effort_ = std::clamp(msg->data, -max_effort_, max_effort_);
+    // First element is the motor effort
+    commanded_effort_ = std::clamp(msg->data[0], -max_effort_, max_effort_);
 }
 
 void QubeServo3Driver::calculateVelocities(double dt)
