@@ -51,6 +51,9 @@ QubeServo3Driver::QubeServo3Driver(const rclcpp::NodeOptions & options)
             1s, std::bind(&QubeServo3Driver::publishDiagnostics, this));
     }
     
+
+
+
     RCLCPP_INFO(this->get_logger(), "Qube Servo 3 Driver initialized with Quanser HIL API");
     RCLCPP_INFO(this->get_logger(), "  Board Type: %s", board_type_.c_str());
     RCLCPP_INFO(this->get_logger(), "  Board ID: %s", board_identifier_.c_str());
@@ -100,6 +103,10 @@ bool QubeServo3Driver::initializeHardware()
     
     encoder_channels_[0] = 0;
     encoder_channels_[1] = 1;
+    encoder_vel_channels_[0] = 14000;
+    encoder_vel_channels_[1] = 14001;
+
+
     dac_channels_[0] = 0;
     adc_channels_[0] = 0;
     pwm_channels_[0] = 0;
@@ -121,7 +128,21 @@ bool QubeServo3Driver::initializeHardware()
         RCLCPP_INFO(this->get_logger(), "Motor amplifier enabled");
     }
     
+    //std::this_thread::sleep_for(std::chrono::milliseconds(10000)); // Short delay to ensure hardware is ready
+    
+
+    motor_encoder_offset_ = 0;
+    pendulum_encoder_offset_ = 0;
+
+
     hardware_initialized_ = true;
+    readEncoders();
+
+    motor_encoder_offset_ = state_.encoder_counts[0];
+    pendulum_encoder_offset_ = state_.encoder_counts[1];
+
+
+    
     RCLCPP_INFO(this->get_logger(), "Quanser hardware initialized successfully");
     
     return true;
@@ -152,9 +173,12 @@ bool QubeServo3Driver::readEncoders()
         handleQuanserError("hil_read_encoder", result);
         return false;
     }
+
+    counts[0] -= motor_encoder_offset_;
+    counts[1] -= pendulum_encoder_offset_;
     
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     state_.encoder_counts[0] = counts[0];
     state_.encoder_counts[1] = counts[1];
     state_.motor_position    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
@@ -186,7 +210,7 @@ void QubeServo3Driver::writeVoltage(double voltage)
 {
     if (!hardware_initialized_) return;
     
-    voltage = std::clamp(voltage, -10.0, 10.0);
+    voltage = std::clamp(voltage, -15.0, 15.0);
     
     t_double voltages[1] = {voltage};
     t_error result = hil_write_analog(card_, dac_channels_, 1, voltages);
@@ -228,18 +252,30 @@ void QubeServo3Driver::effortCallback(const std_msgs::msg::Float64MultiArray::Sh
 
 void QubeServo3Driver::calculateVelocities(double dt)
 {
+    if (!hardware_initialized_) return;
+    
+    t_double counts[2];
+    t_error result = hil_read_other(card_, encoder_vel_channels_, 2, counts);
+    if (result != 0) {
+        handleQuanserError("hil_read_other", result);
+        return;
+    }
+
+
     if (dt <= 0.0) return;
     
     std::lock_guard<std::mutex> lock(mutex_);
+    state_.motor_velocity    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
+    state_.pendulum_velocity = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
+
+    //double delta_motor     = state_.motor_position - prev_state_.motor_position;
+    //double raw_motor_vel   = delta_motor / dt;
     
-    double delta_motor     = state_.motor_position - prev_state_.motor_position;
-    double raw_motor_vel   = delta_motor / dt;
+    //double delta_pendulum    = unwrapAngle(state_.pendulum_position, prev_state_.pendulum_position);
+    //double raw_pendulum_vel  = delta_pendulum / dt;
     
-    double delta_pendulum    = unwrapAngle(state_.pendulum_position, prev_state_.pendulum_position);
-    double raw_pendulum_vel  = delta_pendulum / dt;
-    
-    state_.motor_velocity    = filter_alpha_ * raw_motor_vel    + (1.0 - filter_alpha_) * prev_state_.motor_velocity;
-    state_.pendulum_velocity = filter_alpha_ * raw_pendulum_vel + (1.0 - filter_alpha_) * prev_state_.pendulum_velocity;
+    //state_.motor_velocity    = filter_alpha_ * raw_motor_vel    + (1.0 - filter_alpha_) * prev_state_.motor_velocity;
+    //state_.pendulum_velocity = filter_alpha_ * raw_pendulum_vel + (1.0 - filter_alpha_) * prev_state_.pendulum_velocity;
     
     prev_state_ = state_;
 }
@@ -298,7 +334,7 @@ void QubeServo3Driver::controlLoop()
         std::lock_guard<std::mutex> lock(mutex_);
         joint_state_msg.position = {state_.motor_position, state_.pendulum_position};
         joint_state_msg.velocity = {state_.motor_velocity, state_.pendulum_velocity};
-        joint_state_msg.effort   = {state_.motor_current * 0.1, 0.0};
+        joint_state_msg.effort   = {state_.motor_current, 0.0};
     }
     
     joint_state_pub_->publish(joint_state_msg);

@@ -88,12 +88,17 @@ private:
 
     // Channel configuration
     t_uint32 encoder_channels_[2];
+    t_uint32 encoder_vel_channels_[2];
     t_uint32 dac_channels_[1];
     t_uint32 adc_channels_[1];
     t_uint32 pwm_channels_[1];
     t_uint32 encoder_counts_[2];
     t_double adc_values_[1];
     t_uint32 digital_out_channels_[1];
+
+    // Encoder offset
+    t_int32 motor_encoder_offset_;
+    t_int32 pendulum_encoder_offset_;
 
     // Hardware status
     bool hardware_initialized_;
