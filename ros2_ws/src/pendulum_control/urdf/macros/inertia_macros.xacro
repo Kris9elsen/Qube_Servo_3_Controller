@@ -5,7 +5,7 @@
     <inertial>
       <mass value="${mass}"/>
       <!-- COM at geometric center -->
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${length/2} 0 0" rpy="0 0 0"/>
       <inertia
         ixx="${(1/12.0)*mass*length*length + 0.25*mass*radius*radius}" 
         ixy="0" ixz="0"
@@ -14,10 +14,10 @@
         izz="${0.5*mass*radius*radius}"/>
     </inertial>
   </xacro:macro> 
-  <xacro:macro name="base_inertia" params="mass">
+  <xacro:macro name="base_inertia" params="mass depth width height">
   <inertial>
     <mass value="${mass}"/>
-    <origin xyz="0 0 ${mass/2}" rpy="0 0 0"/>
+      <origin xyz="${depth/2} ${width/2} ${height/2}" rpy="0 0 0"/>
     <inertia ixx="${mass/6}" ixy="0" ixz="0" iyy="${mass/6}" iyz="0" izz="${mass/6}"/>
   </inertial>
   </xacro:macro>
