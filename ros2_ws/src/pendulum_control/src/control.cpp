@@ -51,12 +51,11 @@ private:
     if (actual_positions_.size() < 2) return;
 
     std_msgs::msg::Float64MultiArray effort_msg;
-
-    double error = set_points_ - actual_positions_[1];
-
-
+    
     double theta1 = actual_positions_[0];
-    error += 0.1 * theta1; // Coupling term to stabilize the first joint
+    double error = (set_points_- 0.001 * theta1) - actual_positions_[1];
+
+
 
     // Propotional
     double p_term = kp_ * error;
@@ -68,7 +67,7 @@ private:
 
     // Derivative
     double derivative = (error - prev_error_) / dt;
-    double d_term = kd_ * derivative;
+    double d_term = kd_ * actual_velocities_[1]; // Using actual velocity for derivative term
 
     prev_error_ = error;
 
