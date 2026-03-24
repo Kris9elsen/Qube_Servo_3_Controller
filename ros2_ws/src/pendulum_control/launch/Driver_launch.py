@@ -10,7 +10,7 @@ def generate_launch_description():
     driver_path = FindPackageShare("qube_servo3_driver").find("qube_servo3_driver")
 
     rviz_config_file = os.path.join(pkg_path, "rviz", "config.rviz")
-    xacro_file       = os.path.join(pkg_path, "urdf", "qube_servo3.urdf.xacro")
+    xacro_file       = os.path.join(pkg_path, "urdf", "qube_servo.urdf.xacro")
 
     robot_description = {"robot_description": Command(["xacro ", xacro_file])}
 
@@ -40,7 +40,7 @@ def generate_launch_description():
             'board_identifier':            '0',
             'update_rate':                 1000.0,
             'joint_names':                 ['rotor_joint', 'pendulum_joint'],
-            'encoder_resolution':          4096.0,
+            'encoder_resolution':          2048.0,
             'pendulum_encoder_resolution': 2048.0,
             'max_effort':                  1.5,
             'effort_to_voltage':           1.0,
@@ -64,9 +64,9 @@ def generate_launch_description():
         name="pid_controller",
         parameters=[{
             "pos": 3.14,
-            "kp":  1.0,
-            "ki":  0.5,
-            "kd":  0.1,
+            "kp":  60.0,
+            "ki":  12.0,
+            "kd":  0.5,
         }]
     )
 
