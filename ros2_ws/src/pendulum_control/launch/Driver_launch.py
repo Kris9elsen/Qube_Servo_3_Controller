@@ -10,7 +10,7 @@ def generate_launch_description():
     driver_path = FindPackageShare("qube_servo3_driver").find("qube_servo3_driver")
 
     rviz_config_file = os.path.join(pkg_path, "rviz", "config.rviz")
-    xacro_file       = os.path.join(driver_path, "urdf", "qube_servo3_real.urdf.xacro")
+    xacro_file       = os.path.join(pkg_path, "urdf", "qube_servo3.urdf.xacro")
 
     robot_description = {"robot_description": Command(["xacro ", xacro_file])}
 
