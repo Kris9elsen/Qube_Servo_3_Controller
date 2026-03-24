@@ -185,7 +185,6 @@ void QubeServo3Driver::writeVoltage(double voltage)
         return;
     }
     
-    // FIX: lock inside writeVoltage, not in the caller — avoids deadlock
     std::lock_guard<std::mutex> lock(mutex_);
     state_.motor_voltage = voltage;
 }
@@ -271,8 +270,6 @@ void QubeServo3Driver::controlLoop()
     readCurrent();
     calculateVelocities(dt);
 
-    // FIX: read commanded_effort_ under lock, then call writeVoltage separately
-    // (writeVoltage locks internally — holding the lock here before calling it caused a deadlock)
     double voltage;
     {
         std::lock_guard<std::mutex> lock(mutex_);
