@@ -102,7 +102,8 @@ def generate_launch_description():
         executable="control",
         name="pid_controller",
         parameters=[{
-            "kp" : 10.0,
+            "pos" : 3.14,
+            "kp" : 1.0,
             "ki" : 0.5,
             "kd" : 0.1,
         }],

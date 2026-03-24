@@ -23,7 +23,7 @@ public:
         std::bind(&PID_Controller::control_loop, this));
 
     // Target position
-    set_points_ = 0.0;
+    set_points_ = this->declare_parameter("pos", 3.14);
 
     integral_ = 0.0;
     prev_error_ = 0.0;
