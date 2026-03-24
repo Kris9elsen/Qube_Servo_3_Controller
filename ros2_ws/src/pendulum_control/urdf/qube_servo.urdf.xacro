@@ -54,10 +54,10 @@
 
   <!-- gazebo materials -->
   <gazebo reference="base_link">
-    <material>Gazebo/Red</material>
+    <material>Gazebo/Green</material>
   </gazebo>
   <gazebo reference="rotor_link">
-    <material>Gazebo/Green</material>
+    <material>Gazebo/Red</material>
   </gazebo>
   <gazebo reference="pendulum_link">
     <material>Gazebo/Orange</material>
