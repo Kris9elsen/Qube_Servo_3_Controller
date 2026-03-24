@@ -67,8 +67,8 @@ def generate_launch_description():
             "kp":  15.0,
             "ki":  0.0,
             "kd":  1.0,
-            "km": 0.5,
-            "kmd": 0.2,
+            "km": 0.9,
+            "kmd": 0.4,
         }]
     )
 
