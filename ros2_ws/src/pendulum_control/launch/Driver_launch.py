@@ -63,11 +63,16 @@ def generate_launch_description():
         executable="control",
         name="pid_controller",
         parameters=[{
-            "pos": 3.14,
-            "kp":  60.0,
-            "ki":  12.0,
-            "kd":  0.5,
+            "kp_balance":  40.0,
+            "kd_balance":  10.0,
+            "kp_swingup":  40.0,
+            "kp_base": 20.0,
+            "kd_base": 2.0,
+            "kd_damp": 8.0,
+            "balance_threshold": 0.3,
+            "base_setpoint": 0.0,
         }]
+        
     )
 
     return LaunchDescription([
