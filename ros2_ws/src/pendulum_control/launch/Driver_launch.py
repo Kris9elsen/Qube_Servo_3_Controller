@@ -43,10 +43,12 @@ def generate_launch_description():
             'encoder_resolution':          2048.0,
             'pendulum_encoder_resolution': 2048.0,
             'max_effort':                  3.5,
-            'effort_to_voltage':           1.0,
-            'filter_alpha':                0.1,
             'current_sensor_gain':         0.1,
             'enable_diagnostics':          True,
+            # Qube Servo 3 motor electromechanical parameters (Quanser datasheet)
+            'motor_resistance':            7.5,   # Rm [Ohm]
+            'motor_torque_const':          0.042, # Kt [Nm/A]
+            'back_emf_const':              0.042, # Kb [V·s/rad]
         }]
     )
 
@@ -67,7 +69,7 @@ def generate_launch_description():
             "kp":  15.0,
             "ki":  0.0,
             "kd":  1.0,
-            "km": 0.9,
+            "km":  0.9,
             "kmd": 0.4,
         }]
     )

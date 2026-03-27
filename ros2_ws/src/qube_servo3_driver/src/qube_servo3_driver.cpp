@@ -141,7 +141,7 @@ bool QubeServo3Driver::initializeHardware()
         return false;
     }
 
-    result = hil_task_start(task_, SYSTEM_CLOCK_1, update_rate_, -1);
+    result = hil_task_start(task_, HARDWARE_CLOCK_0, update_rate_, -1);
     if (result != 0) {
         handleQuanserError("hil_task_start", result);
         hil_task_delete(task_);
