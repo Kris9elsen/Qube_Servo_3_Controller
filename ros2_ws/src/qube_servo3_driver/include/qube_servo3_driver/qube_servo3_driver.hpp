@@ -52,12 +52,15 @@ private:
     void shutdownHardware();
     bool readEncoders();
     bool readCurrent();
+    bool readSensors();
     void writeVoltage(double voltage);
 
     // Utility functions
     void   calculateVelocities(double dt);
     double unwrapAngle(double current, double previous);
     void   checkHardwareStatus();
+    double torqueToVoltage(double torque) const;
+    double voltageToTorque(double voltage);
 
     // Parameters
     std::string              board_type_;
@@ -71,6 +74,10 @@ private:
     double                   filter_alpha_;
     double                   current_sensor_gain_;
     bool                     enable_diagnostics_;
+    double                   motor_resistance_;
+    double                   motor_torque_const_;
+    double                   back_emf_const_;
+    t_task                   task_;
 
     // State variables
     QubeState      state_;

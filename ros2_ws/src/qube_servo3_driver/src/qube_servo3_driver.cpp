@@ -12,9 +12,6 @@
 #include <cmath>
 #include <iomanip>
 
-// std_msgs/Float64MultiArray is what ros2_control's effort_controller publishes.
-// std_msgs/Float64 is used as a fallback for direct publishing.
-// We subscribe to Float64MultiArray to be compatible with both the sim PID node and direct commands.
 #include <std_msgs/msg/float64_multi_array.hpp>
 
 using namespace std::chrono_literals;
@@ -30,10 +27,10 @@ QubeServo3Driver::QubeServo3Driver(const rclcpp::NodeOptions & options)
 {
     declareParameters();
     
-    state_ = QubeState{};
-    prev_state_ = QubeState{};
-    commanded_effort_ = 0.0;
-    prev_time_ = this->now();
+    state_                = QubeState{};
+    prev_state_           = QubeState{};
+    commanded_effort_     = 0.0;
+    prev_time_            = this->now();
     last_diagnostic_time_ = this->now();
     
     if (!initializeHardware()) {
@@ -50,9 +47,6 @@ QubeServo3Driver::QubeServo3Driver(const rclcpp::NodeOptions & options)
         diagnostic_timer_ = this->create_wall_timer(
             1s, std::bind(&QubeServo3Driver::publishDiagnostics, this));
     }
-    
-
-
 
     RCLCPP_INFO(this->get_logger(), "Qube Servo 3 Driver initialized with Quanser HIL API");
     RCLCPP_INFO(this->get_logger(), "  Board Type: %s", board_type_.c_str());
@@ -76,14 +70,17 @@ void QubeServo3Driver::declareParameters()
     this->declare_parameter<std::string>("board_identifier", "0");
     this->declare_parameter<double>("update_rate", 1000.0);
     this->declare_parameter<std::vector<std::string>>("joint_names", {"motor", "pendulum"});
-    this->declare_parameter<double>("encoder_resolution", 4096.0);         // motor encoder counts/rev
-    this->declare_parameter<double>("pendulum_encoder_resolution", 2048.0); // pendulum encoder counts/rev
+    this->declare_parameter<double>("encoder_resolution", 4096.0);
+    this->declare_parameter<double>("pendulum_encoder_resolution", 2048.0);
     this->declare_parameter<double>("max_effort", 1.5);
-    this->declare_parameter<double>("effort_to_voltage", 1.0);
-    this->declare_parameter<double>("filter_alpha", 0.1);
     this->declare_parameter<double>("current_sensor_gain", 0.1);
     this->declare_parameter<bool>("enable_diagnostics", true);
-    
+
+    // Qube Servo 3 motor electromechanical parameters (Quanser datasheet)
+    this->declare_parameter<double>("motor_resistance",   8.4);   // Rm [Ohm]
+    this->declare_parameter<double>("motor_torque_const", 0.042); // Kt [Nm/A]
+    this->declare_parameter<double>("back_emf_const",     0.042); // Kb [V·s/rad] (= Kt in SI)
+
     this->get_parameter("board_type", board_type_);
     this->get_parameter("board_identifier", board_identifier_);
     this->get_parameter("update_rate", update_rate_);
@@ -91,33 +88,32 @@ void QubeServo3Driver::declareParameters()
     this->get_parameter("encoder_resolution", encoder_resolution_);
     this->get_parameter("pendulum_encoder_resolution", pendulum_encoder_resolution_);
     this->get_parameter("max_effort", max_effort_);
-    this->get_parameter("effort_to_voltage", effort_to_voltage_);
-    this->get_parameter("filter_alpha", filter_alpha_);
     this->get_parameter("current_sensor_gain", current_sensor_gain_);
     this->get_parameter("enable_diagnostics", enable_diagnostics_);
+    this->get_parameter("motor_resistance",   motor_resistance_);
+    this->get_parameter("motor_torque_const", motor_torque_const_);
+    this->get_parameter("back_emf_const",     back_emf_const_);
 }
 
 bool QubeServo3Driver::initializeHardware()
 {
     t_error result;
     
-    encoder_channels_[0] = 0;
-    encoder_channels_[1] = 1;
-    encoder_vel_channels_[0] = 14000;
-    encoder_vel_channels_[1] = 14001;
+    // Channel assignments
+    encoder_channels_[0]     = 0;     // motor encoder
+    encoder_channels_[1]     = 1;     // pendulum encoder
+    encoder_vel_channels_[0] = 14000; // motor velocity (Quanser hardware estimator)
+    encoder_vel_channels_[1] = 14001; // pendulum velocity
+    dac_channels_[0]         = 0;
+    adc_channels_[0]         = 0;
 
-
-    dac_channels_[0] = 0;
-    adc_channels_[0] = 0;
-    pwm_channels_[0] = 0;
-    
     result = hil_open(board_type_.c_str(), board_identifier_.c_str(), &card_);
     if (result != 0) {
         handleQuanserError("hil_open", result);
         return false;
     }
-    
-    // Initialize DAC to 0 before enabling amplifier
+
+    // Zero the DAC before enabling the amplifier
     writeVoltage(0.0);
 
     t_boolean enable_value[1] = {true};
@@ -127,83 +123,128 @@ bool QubeServo3Driver::initializeHardware()
     } else {
         RCLCPP_INFO(this->get_logger(), "Motor amplifier enabled");
     }
-    
-    //std::this_thread::sleep_for(std::chrono::milliseconds(10000)); // Short delay to ensure hardware is ready
-    
 
-    motor_encoder_offset_ = 0;
+    // Create a HIL reader task that samples all channels atomically at update_rate_.
+    // This guarantees encoder, velocity and ADC readings are all from the same instant,
+    // which is critical for accurate velocity estimates and back-EMF compensation.
+    result = hil_task_create_reader(
+        card_,
+        1,                      // samples per period (single-buffered)
+        adc_channels_,      1,  // analog in  (current sense)
+        encoder_channels_,  2,  // encoders   (motor + pendulum)
+        NULL,               0,  // digital in (unused)
+        encoder_vel_channels_, 2, // other    (hardware velocity estimates)
+        &task_);
+    if (result != 0) {
+        handleQuanserError("hil_task_create_reader", result);
+        hil_close(card_);
+        return false;
+    }
+
+    result = hil_task_start(task_, SYSTEM_CLOCK_1, update_rate_, -1);
+    if (result != 0) {
+        handleQuanserError("hil_task_start", result);
+        hil_task_delete(task_);
+        hil_close(card_);
+        return false;
+    }
+
+    // Capture encoder offsets so all positions start at zero on init
+    motor_encoder_offset_    = 0;
     pendulum_encoder_offset_ = 0;
+    hardware_initialized_    = true;
 
-
-    hardware_initialized_ = true;
-    readEncoders();
-
-    motor_encoder_offset_ = state_.encoder_counts[0];
+    readSensors();
+    motor_encoder_offset_    = state_.encoder_counts[0];
     pendulum_encoder_offset_ = state_.encoder_counts[1];
 
-
-    
     RCLCPP_INFO(this->get_logger(), "Quanser hardware initialized successfully");
-    
+    RCLCPP_INFO(this->get_logger(), "  Encoder offsets: motor=%d, pendulum=%d",
+                motor_encoder_offset_, pendulum_encoder_offset_);
+
     return true;
 }
 
 void QubeServo3Driver::shutdownHardware()
 {
     if (!hardware_initialized_) return;
-    
+
     writeVoltage(0.0);
-    
+
+    hil_task_stop(task_);
+    hil_task_delete(task_);
+
     if (card_) {
         hil_close(card_);
         card_ = nullptr;
     }
-    
+
     hardware_initialized_ = false;
     RCLCPP_INFO(this->get_logger(), "Quanser hardware shut down");
 }
 
-bool QubeServo3Driver::readEncoders()
+// Read all sensors in a single atomic HIL task sample.
+// Populates: encoder positions, hardware velocity estimates, motor current.
+bool QubeServo3Driver::readSensors()
 {
     if (!hardware_initialized_) return false;
-    
-    t_int32 counts[2];
-    t_error result = hil_read_encoder(card_, encoder_channels_, 2, counts);
+
+    t_double adc[1];
+    t_int32  enc[2];
+    t_double vel[2];
+
+    t_error result = hil_task_read(
+        task_,
+        1,      // samples to read
+        adc,    // analog  (current sense)
+        enc,    // encoders
+        NULL,   // digital (unused)
+        vel);   // other   (velocity)
+
     if (result != 0) {
-        handleQuanserError("hil_read_encoder", result);
+        handleQuanserError("hil_task_read", result);
         return false;
     }
 
-    counts[0] -= motor_encoder_offset_;
-    counts[1] -= pendulum_encoder_offset_;
-    
+    enc[0] -= motor_encoder_offset_;
+    enc[1] -= pendulum_encoder_offset_;
+
     std::lock_guard<std::mutex> lock(mutex_);
 
-    state_.encoder_counts[0] = counts[0];
-    state_.encoder_counts[1] = counts[1];
-    state_.motor_position    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
+    // Positions
+    state_.encoder_counts[0] = enc[0];
+    state_.encoder_counts[1] = enc[1];
+    state_.motor_position    = (static_cast<double>(enc[0]) / encoder_resolution_) * 2.0 * M_PI;
 
-    // Use separate resolution for pendulum encoder, and wrap to [-pi, pi]
-    double raw_pendulum = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
+    double raw_pendulum      = (static_cast<double>(enc[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
     state_.pendulum_position = std::remainder(raw_pendulum - M_PI, 2.0 * M_PI) + M_PI;
-    
+
+    // Velocities — directly from Quanser hardware velocity estimator
+    state_.motor_velocity    = (vel[0] / encoder_resolution_)          * 2.0 * M_PI;
+    state_.pendulum_velocity = (vel[1] / pendulum_encoder_resolution_) * 2.0 * M_PI;
+
+    // Current
+    state_.motor_current = adc[0] / current_sensor_gain_;
+
     return true;
 }
 
-bool QubeServo3Driver::readCurrent()
+// Convert commanded torque [Nm] to motor terminal voltage [V] using the
+// DC motor electromechanical equation:
+//
+//   V = (τ / Kt) * Rm  +  Kb * ω
+//
+//   τ  = desired torque      [Nm]
+//   Kt = torque constant     [Nm/A]
+//   Rm = winding resistance  [Ohm]
+//   Kb = back-EMF constant   [V·s/rad]  (numerically equal to Kt in SI)
+//   ω  = motor velocity      [rad/s]
+//
+double QubeServo3Driver::torqueToVoltage(double torque_nm) const
 {
-    if (!hardware_initialized_) return false;
-    
-    t_error result = hil_read_analog(card_, adc_channels_, 1, adc_values_);
-    if (result != 0) {
-        handleQuanserError("hil_read_analog", result);
-        return false;
-    }
-    
-    std::lock_guard<std::mutex> lock(mutex_);
-    state_.motor_current = adc_values_[0] / current_sensor_gain_;
-    
-    return true;
+    const double resistive_drop = (torque_nm / motor_torque_const_) * motor_resistance_;
+    const double back_emf       = back_emf_const_ * state_.motor_velocity;
+    return resistive_drop + back_emf;
 }
 
 void QubeServo3Driver::writeVoltage(double voltage)
@@ -246,48 +287,14 @@ void QubeServo3Driver::effortCallback(const std_msgs::msg::Float64MultiArray::Sh
 {
     if (msg->data.empty()) return;
     std::lock_guard<std::mutex> lock(mutex_);
-    // First element is the motor effort
     commanded_effort_ = std::clamp(msg->data[0], -max_effort_, max_effort_);
-}
-
-void QubeServo3Driver::calculateVelocities(double dt)
-{
-    if (!hardware_initialized_) return;
-    
-    t_double counts[2];
-    t_error result = hil_read_other(card_, encoder_vel_channels_, 2, counts);
-    if (result != 0) {
-        handleQuanserError("hil_read_other", result);
-        return;
-    }
-
-
-    if (dt <= 0.0) return;
-    
-    std::lock_guard<std::mutex> lock(mutex_);
-    state_.motor_velocity    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
-    state_.pendulum_velocity = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
-
-    //double delta_motor     = state_.motor_position - prev_state_.motor_position;
-    //double raw_motor_vel   = delta_motor / dt;
-    
-    //double delta_pendulum    = unwrapAngle(state_.pendulum_position, prev_state_.pendulum_position);
-    //double raw_pendulum_vel  = delta_pendulum / dt;
-    
-    //state_.motor_velocity    = filter_alpha_ * raw_motor_vel    + (1.0 - filter_alpha_) * prev_state_.motor_velocity;
-    //state_.pendulum_velocity = filter_alpha_ * raw_pendulum_vel + (1.0 - filter_alpha_) * prev_state_.pendulum_velocity;
-    
-    prev_state_ = state_;
 }
 
 double QubeServo3Driver::unwrapAngle(double current, double previous)
 {
     double delta = current - previous;
-    if (delta > M_PI) {
-        delta -= 2.0 * M_PI;
-    } else if (delta < -M_PI) {
-        delta += 2.0 * M_PI;
-    }
+    if (delta > M_PI)       delta -= 2.0 * M_PI;
+    else if (delta < -M_PI) delta += 2.0 * M_PI;
     return delta;
 }
 
@@ -309,43 +316,40 @@ void QubeServo3Driver::controlLoop()
     }
 
     auto current_time = this->now();
-    double dt = (current_time - prev_time_).seconds();
 
-    if (!readEncoders()) {
+    if (!readSensors()) {
         return;
     }
 
-    readCurrent();
-    calculateVelocities(dt);
-
+    // Convert commanded torque [Nm] → voltage [V] via electromechanical model
     double voltage;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        voltage = -commanded_effort_ * effort_to_voltage_;
+        voltage = torqueToVoltage(-commanded_effort_);
     }
     writeVoltage(voltage);
 
     // Publish joint states
     auto joint_state_msg = sensor_msgs::msg::JointState();
     joint_state_msg.header.stamp = current_time;
-    joint_state_msg.name = joint_names_;
+    joint_state_msg.name         = joint_names_;
     
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        joint_state_msg.position = {state_.motor_position, state_.pendulum_position};
-        joint_state_msg.velocity = {state_.motor_velocity, state_.pendulum_velocity};
-        joint_state_msg.effort   = {state_.motor_current, 0.0};
+        joint_state_msg.position = {state_.motor_position,  state_.pendulum_position};
+        joint_state_msg.velocity = {state_.motor_velocity,  state_.pendulum_velocity};
+        joint_state_msg.effort   = {state_.motor_current,   0.0};
     }
     
     joint_state_pub_->publish(joint_state_msg);
     
     if (wrench_pub_->get_subscription_count() > 0) {
         auto wrench_msg = geometry_msgs::msg::WrenchStamped();
-        wrench_msg.header.stamp = current_time;
-        wrench_msg.wrench.torque.z = state_.motor_current * 0.1;
+        wrench_msg.header.stamp    = current_time;
+        wrench_msg.wrench.torque.z = state_.motor_current * motor_torque_const_;
         wrench_pub_->publish(wrench_msg);
     }
-    
+
     prev_time_ = current_time;
 }
 
@@ -380,12 +384,13 @@ void QubeServo3Driver::publishDiagnostics()
         status.values.push_back(kv);
     };
 
-    addKV("Motor Position (rad)",    std::to_string(state_.motor_position));
-    addKV("Pendulum Position (rad)", std::to_string(state_.pendulum_position));
-    addKV("Motor Velocity (rad/s)",  std::to_string(state_.motor_velocity));
-    addKV("Motor Current (A)",       std::to_string(state_.motor_current));
-    addKV("Motor Voltage (V)",       std::to_string(state_.motor_voltage));
-    addKV("Encoder Counts (Motor)",  std::to_string(state_.encoder_counts[0]));
+    addKV("Motor Position (rad)",      std::to_string(state_.motor_position));
+    addKV("Pendulum Position (rad)",   std::to_string(state_.pendulum_position));
+    addKV("Motor Velocity (rad/s)",    std::to_string(state_.motor_velocity));
+    addKV("Pendulum Velocity (rad/s)", std::to_string(state_.pendulum_velocity));
+    addKV("Motor Current (A)",         std::to_string(state_.motor_current));
+    addKV("Motor Voltage (V)",         std::to_string(state_.motor_voltage));
+    addKV("Encoder Counts (Motor)",    std::to_string(state_.encoder_counts[0]));
     addKV("Encoder Counts (Pendulum)", std::to_string(state_.encoder_counts[1]));
     
     diag_msg.status.push_back(status);
@@ -410,12 +415,15 @@ QubeServo3Driver::parametersCallback(const std::vector<rclcpp::Parameter> &param
         if (param.get_name() == "max_effort") {
             max_effort_ = param.as_double();
             RCLCPP_INFO(this->get_logger(), "Updated max_effort to %f", max_effort_);
-        } else if (param.get_name() == "effort_to_voltage") {
-            effort_to_voltage_ = param.as_double();
-            RCLCPP_INFO(this->get_logger(), "Updated effort_to_voltage to %f", effort_to_voltage_);
-        } else if (param.get_name() == "filter_alpha") {
-            filter_alpha_ = param.as_double();
-            RCLCPP_INFO(this->get_logger(), "Updated filter_alpha to %f", filter_alpha_);
+        } else if (param.get_name() == "motor_resistance") {
+            motor_resistance_ = param.as_double();
+            RCLCPP_INFO(this->get_logger(), "Updated motor_resistance to %f", motor_resistance_);
+        } else if (param.get_name() == "motor_torque_const") {
+            motor_torque_const_ = param.as_double();
+            RCLCPP_INFO(this->get_logger(), "Updated motor_torque_const to %f", motor_torque_const_);
+        } else if (param.get_name() == "back_emf_const") {
+            back_emf_const_ = param.as_double();
+            RCLCPP_INFO(this->get_logger(), "Updated back_emf_const to %f", back_emf_const_);
         }
     }
     
