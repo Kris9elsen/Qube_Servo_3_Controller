@@ -52,7 +52,6 @@ private:
     void shutdownHardware();
     bool readEncoders();
     bool readCurrent();
-    bool readSensors();
     void writeVoltage(double voltage);
 
     // Utility functions
@@ -77,7 +76,6 @@ private:
     double                   motor_resistance_;
     double                   motor_torque_const_;
     double                   back_emf_const_;
-    t_task                   task_;
 
     // State variables
     QubeState      state_;

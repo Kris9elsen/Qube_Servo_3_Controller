@@ -124,37 +124,12 @@ bool QubeServo3Driver::initializeHardware()
         RCLCPP_INFO(this->get_logger(), "Motor amplifier enabled");
     }
 
-    // Create a HIL reader task that samples all channels atomically at update_rate_.
-    // This guarantees encoder, velocity and ADC readings are all from the same instant,
-    // which is critical for accurate velocity estimates and back-EMF compensation.
-    result = hil_task_create_reader(
-        card_,
-        1,                      // samples per period (single-buffered)
-        adc_channels_,      1,  // analog in  (current sense)
-        encoder_channels_,  2,  // encoders   (motor + pendulum)
-        NULL,               0,  // digital in (unused)
-        encoder_vel_channels_, 2, // other    (hardware velocity estimates)
-        &task_);
-    if (result != 0) {
-        handleQuanserError("hil_task_create_reader", result);
-        hil_close(card_);
-        return false;
-    }
-
-    result = hil_task_start(task_, HARDWARE_CLOCK_0, update_rate_, -1);
-    if (result != 0) {
-        handleQuanserError("hil_task_start", result);
-        hil_task_delete(task_);
-        hil_close(card_);
-        return false;
-    }
-
     // Capture encoder offsets so all positions start at zero on init
     motor_encoder_offset_    = 0;
     pendulum_encoder_offset_ = 0;
     hardware_initialized_    = true;
 
-    readSensors();
+    readEncoders();
     motor_encoder_offset_    = state_.encoder_counts[0];
     pendulum_encoder_offset_ = state_.encoder_counts[1];
 
@@ -171,9 +146,6 @@ void QubeServo3Driver::shutdownHardware()
 
     writeVoltage(0.0);
 
-    hil_task_stop(task_);
-    hil_task_delete(task_);
-
     if (card_) {
         hil_close(card_);
         card_ = nullptr;
@@ -183,50 +155,66 @@ void QubeServo3Driver::shutdownHardware()
     RCLCPP_INFO(this->get_logger(), "Quanser hardware shut down");
 }
 
-// Read all sensors in a single atomic HIL task sample.
-// Populates: encoder positions, hardware velocity estimates, motor current.
-bool QubeServo3Driver::readSensors()
+bool QubeServo3Driver::readEncoders()
 {
     if (!hardware_initialized_) return false;
 
-    t_double adc[1];
-    t_int32  enc[2];
-    t_double vel[2];
-
-    t_error result = hil_task_read(
-        task_,
-        1,      // samples to read
-        adc,    // analog  (current sense)
-        enc,    // encoders
-        NULL,   // digital (unused)
-        vel);   // other   (velocity)
+    t_int32 counts[2];
+    t_error result = hil_read_encoder(card_, encoder_channels_, 2, counts);
 
     if (result != 0) {
-        handleQuanserError("hil_task_read", result);
+        handleQuanserError("hil_read_encoder", result);
         return false;
     }
 
-    enc[0] -= motor_encoder_offset_;
-    enc[1] -= pendulum_encoder_offset_;
+    counts[0] -= motor_encoder_offset_;
+    counts[1] -= pendulum_encoder_offset_;
 
     std::lock_guard<std::mutex> lock(mutex_);
 
-    // Positions
-    state_.encoder_counts[0] = enc[0];
-    state_.encoder_counts[1] = enc[1];
-    state_.motor_position    = (static_cast<double>(enc[0]) / encoder_resolution_) * 2.0 * M_PI;
+    state_.encoder_counts[0] = counts[0];
+    state_.encoder_counts[1] = counts[1];
+    state_.motor_position    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
 
-    double raw_pendulum      = (static_cast<double>(enc[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
+    double raw_pendulum = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
     state_.pendulum_position = std::remainder(raw_pendulum - M_PI, 2.0 * M_PI) + M_PI;
 
-    // Velocities — directly from Quanser hardware velocity estimator
-    state_.motor_velocity    = (vel[0] / encoder_resolution_)          * 2.0 * M_PI;
-    state_.pendulum_velocity = (vel[1] / pendulum_encoder_resolution_) * 2.0 * M_PI;
+    return true;
+}
 
-    // Current
-    state_.motor_current = adc[0] / current_sensor_gain_;
+bool QubeServo3Driver::readCurrent()
+{
+    if (!hardware_initialized_) return false;
+
+    t_error result = hil_read_analog(card_, adc_channels_, 1, adc_values_);
+    if (result != 0) {
+        handleQuanserError("hil_read_analog", result);
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    state_.motor_current = adc_values_[0] / current_sensor_gain_;
 
     return true;
+}
+
+void QubeServo3Driver::calculateVelocities(double dt)
+{
+    if (!hardware_initialized_) return;
+
+    t_double counts[2];
+    t_error result = hil_read_other(card_, encoder_vel_channels_, 2, counts);
+    if (result != 0) {
+        handleQuanserError("hil_read_other", result);
+        return;
+    }
+
+    if (dt <= 0.0) return;
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    state_.motor_velocity    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
+    state_.pendulum_velocity = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
+    prev_state_ = state_;
 }
 
 // Convert commanded torque [Nm] to motor terminal voltage [V] using the
@@ -251,7 +239,7 @@ void QubeServo3Driver::writeVoltage(double voltage)
 {
     if (!hardware_initialized_) return;
     
-    voltage = std::clamp(voltage, -15.0, 15.0);
+    voltage = std::clamp(voltage, -3.5, 3.5);
     
     t_double voltages[1] = {voltage};
     t_error result = hil_write_analog(card_, dac_channels_, 1, voltages);
@@ -316,10 +304,14 @@ void QubeServo3Driver::controlLoop()
     }
 
     auto current_time = this->now();
+    double dt = (current_time - prev_time_).seconds();
 
-    if (!readSensors()) {
+    if (!readEncoders()) {
         return;
     }
+
+    readCurrent();
+    calculateVelocities(dt);
 
     // Convert commanded torque [Nm] → voltage [V] via electromechanical model
     double voltage;
