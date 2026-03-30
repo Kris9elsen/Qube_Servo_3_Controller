@@ -73,6 +73,7 @@ void QubeServo3Driver::declareParameters()
     this->declare_parameter<double>("encoder_resolution", 4096.0);
     this->declare_parameter<double>("pendulum_encoder_resolution", 2048.0);
     this->declare_parameter<double>("max_effort", 1.5);
+    this->declare_parameter<double>("filter_alpha", 0.1);
     this->declare_parameter<double>("current_sensor_gain", 0.1);
     this->declare_parameter<bool>("enable_diagnostics", true);
 
@@ -88,6 +89,7 @@ void QubeServo3Driver::declareParameters()
     this->get_parameter("encoder_resolution", encoder_resolution_);
     this->get_parameter("pendulum_encoder_resolution", pendulum_encoder_resolution_);
     this->get_parameter("max_effort", max_effort_);
+    this->get_parameter("filter_alpha", filter_alpha_);
     this->get_parameter("current_sensor_gain", current_sensor_gain_);
     this->get_parameter("enable_diagnostics", enable_diagnostics_);
     this->get_parameter("motor_resistance",   motor_resistance_);
@@ -212,8 +214,16 @@ void QubeServo3Driver::calculateVelocities(double dt)
     if (dt <= 0.0) return;
 
     std::lock_guard<std::mutex> lock(mutex_);
-    state_.motor_velocity    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
-    state_.pendulum_velocity = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
+    const double raw_motor_velocity =
+        (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
+    const double raw_pendulum_velocity =
+        (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
+
+    const double alpha = std::clamp(filter_alpha_, 0.0, 1.0);
+    state_.motor_velocity =
+        alpha * raw_motor_velocity + (1.0 - alpha) * prev_state_.motor_velocity;
+    state_.pendulum_velocity =
+        alpha * raw_pendulum_velocity + (1.0 - alpha) * prev_state_.pendulum_velocity;
     prev_state_ = state_;
 }
 
@@ -230,16 +240,16 @@ void QubeServo3Driver::calculateVelocities(double dt)
 //
 double QubeServo3Driver::torqueToVoltage(double torque_nm) const
 {
-    const double resistive_drop = (torque_nm / motor_torque_const_) * motor_resistance_;
+    const double resistive_drop = (torque_nm / 100.0 / motor_torque_const_) * motor_resistance_;
     const double back_emf       = back_emf_const_ * state_.motor_velocity;
-    return resistive_drop + back_emf;
+    return (resistive_drop + back_emf);
 }
 
 void QubeServo3Driver::writeVoltage(double voltage)
 {
     if (!hardware_initialized_) return;
     
-    voltage = std::clamp(voltage, -3.5, 3.5);
+    voltage = std::clamp(voltage, -5.0, 5.0);
     
     t_double voltages[1] = {voltage};
     t_error result = hil_write_analog(card_, dac_channels_, 1, voltages);
@@ -330,7 +340,7 @@ void QubeServo3Driver::controlLoop()
         std::lock_guard<std::mutex> lock(mutex_);
         joint_state_msg.position = {state_.motor_position,  state_.pendulum_position};
         joint_state_msg.velocity = {state_.motor_velocity,  state_.pendulum_velocity};
-        joint_state_msg.effort   = {state_.motor_current,   0.0};
+        joint_state_msg.effort   = {voltage,   0.0};
     }
     
     joint_state_pub_->publish(joint_state_msg);
@@ -407,6 +417,9 @@ QubeServo3Driver::parametersCallback(const std::vector<rclcpp::Parameter> &param
         if (param.get_name() == "max_effort") {
             max_effort_ = param.as_double();
             RCLCPP_INFO(this->get_logger(), "Updated max_effort to %f", max_effort_);
+        } else if (param.get_name() == "filter_alpha") {
+            filter_alpha_ = std::clamp(param.as_double(), 0.0, 1.0);
+            RCLCPP_INFO(this->get_logger(), "Updated filter_alpha to %f", filter_alpha_);
         } else if (param.get_name() == "motor_resistance") {
             motor_resistance_ = param.as_double();
             RCLCPP_INFO(this->get_logger(), "Updated motor_resistance to %f", motor_resistance_);
