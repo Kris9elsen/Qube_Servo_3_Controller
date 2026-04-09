@@ -42,7 +42,7 @@ def generate_launch_description():
             'joint_names':                 ['rotor_joint', 'pendulum_joint'],
             'encoder_resolution':          2048.0,
             'pendulum_encoder_resolution': 2048.0,
-            'max_effort':                  3.5,
+            'max_effort':                  8.0,
             'effort_to_voltage':           1.0,
             'filter_alpha':                0.1,
             'current_sensor_gain':         0.1,
@@ -69,8 +69,8 @@ def generate_launch_description():
             "kd":  1.0,
             "km": 0.9,
             "kmd": 0.4,
-            'mu':              500.0,   # swing-up gain, tune this
-            'swing_threshold': 0.175,  # ~10 deg, switch point
+            'mu':              65.0,   # swing-up gain, tune this
+            'swing_threshold': 3.14159 / 8.0,  # ~10 deg, switch point
             'mp':  0.024,              # pendulum mass [kg]
             'Lp':  0.129,              # CoM half-length [m]
             'Jp':  1.33e-4,            # moment of inertia [kg·m²]

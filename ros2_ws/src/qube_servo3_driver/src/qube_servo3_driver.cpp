@@ -210,7 +210,7 @@ void QubeServo3Driver::writeVoltage(double voltage)
 {
     if (!hardware_initialized_) return;
     
-    voltage = std::clamp(voltage, -15.0, 15.0);
+    voltage = std::clamp(voltage, -max_effort_, max_effort_);
     
     t_double voltages[1] = {voltage};
     t_error result = hil_write_analog(card_, dac_channels_, 1, voltages);
