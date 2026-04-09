@@ -18,6 +18,8 @@ public:
     // Swing-up gains
     mu_ = this->declare_parameter("mu", 50.0);                            // energy pumping gain [V/J]
     swing_threshold_ = this->declare_parameter("swing_threshold", 0.175); // ~10 deg in rad
+    command_sign_ = this->declare_parameter("command_sign", 1.0);
+    max_command_ = std::abs(this->declare_parameter("max_command", 10.0));
 
     // Pendulum physical params (adjust to match your hardware)
     mp_ = this->declare_parameter("mp", 0.024);   // pendulum mass [kg]
@@ -110,16 +112,18 @@ private:
       integral_ = 0.0; // reset integrator so it doesn't wind up
       prev_error_ = 0.0;
 
-      double m_term = km_ * motor_pos;
-      double md_term = kmd_ * motor_vel / 100.0;
+      double m_term = -km_ * motor_pos;
+      double md_term = -kmd_ * motor_vel;
 
       double E = compute_energy(alpha, alpha_dot);
       // E_ref = 0 (upright equilibrium), so error = E - 0 = E
       voltage = -mu_ * std::copysign(1.0, alpha_dot * std::cos(alpha)) * E + m_term + md_term;
     }
 
+    voltage *= command_sign_;
+
     // Hard clamp — protect the motor
-    voltage = std::clamp(voltage, -10.0, 10.0);
+    voltage = std::clamp(voltage, -max_command_, max_command_);
 
     std_msgs::msg::Float64MultiArray effort_msg;
     effort_msg.data.push_back(voltage);
@@ -129,7 +133,7 @@ private:
   // Balance gains
   double kp_, ki_, kd_, km_, kmd_;
   // Swing-up gains
-  double mu_, swing_threshold_;
+  double mu_, swing_threshold_, command_sign_, max_command_;
   // Physical params
   double mp_, Lp_, Jp_;
   // State
