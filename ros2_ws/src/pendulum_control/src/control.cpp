@@ -43,7 +43,7 @@ private:
   // Assumes encoder gives 0 at bottom, counts up/down from there
   double wrap_pendulum(double raw)
 {
-    double a = raw - set_point_;  // shift so upright = 0
+    double a = raw;
     // wrap to [-π, π]
     a = std::fmod(a + M_PI, 2.0 * M_PI);
     if (a < 0) a += 2.0 * M_PI;
