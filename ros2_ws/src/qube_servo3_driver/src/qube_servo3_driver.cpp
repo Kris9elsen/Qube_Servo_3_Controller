@@ -181,11 +181,11 @@ bool QubeServo3Driver::readEncoders()
 
     state_.encoder_counts[0] = counts[0];
     state_.encoder_counts[1] = counts[1];
-    state_.motor_position    = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
+    state_.motor_position = (static_cast<double>(counts[0]) / encoder_resolution_) * 2.0 * M_PI;
 
-    // Use separate resolution for pendulum encoder, and wrap to [-pi, pi]
-    double raw_pendulum = (static_cast<double>(counts[1]) / pendulum_encoder_resolution_) * 2.0 * M_PI;
-    state_.pendulum_position = std::remainder(raw_pendulum - M_PI, 2.0 * M_PI) + M_PI;
+    // Wrap counts to [-resolution/2, resolution/2] before converting to radians
+    double wrapped_counts = std::remainder(static_cast<double>(counts[1]), pendulum_encoder_resolution_);
+    state_.pendulum_position = (wrapped_counts / pendulum_encoder_resolution_) * 2.0 * M_PI;
     
     return true;
 }
