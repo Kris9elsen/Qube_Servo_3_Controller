@@ -247,7 +247,8 @@ void QubeServo3Driver::effortCallback(const std_msgs::msg::Float64MultiArray::Sh
     if (msg->data.empty()) return;
     std::lock_guard<std::mutex> lock(mutex_);
     // First element is the motor effort
-    commanded_effort_ = std::clamp(msg->data[0], -max_effort_, max_effort_);
+    //commanded_effort_ = std::clamp(msg->data[0], -max_effort_, max_effort_);
+    commanded_effort_ = std::clamp(msg->data[0], -5.0, 5.0);
 }
 
 void QubeServo3Driver::calculateVelocities(double dt)
@@ -321,7 +322,8 @@ void QubeServo3Driver::controlLoop()
     double voltage;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        voltage = -commanded_effort_ * effort_to_voltage_;
+        //voltage = -commanded_effort_ * effort_to_voltage_;
+        voltage = -commanded_effort_;
     }
     writeVoltage(voltage);
 
