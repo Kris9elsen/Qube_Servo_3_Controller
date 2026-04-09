@@ -64,9 +64,9 @@ def generate_launch_description():
         name="pid_controller",
         parameters=[{
             "pos": 3.14159,
-            "kp":  100,
-            "ki":  20,
-            "kd":  10,
+            "kp":  100.0,
+            "ki":  20.0,
+            "kd":  10.0,
             "km": 0.9,
             "kmd": 0.4,
         }]
