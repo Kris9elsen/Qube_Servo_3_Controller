@@ -4,6 +4,7 @@ from launch.actions import ExecuteProcess, TimerAction, SetEnvironmentVariable
 from launch.substitutions import Command
 from launch_ros.substitutions import FindPackageShare
 import os
+import math
 
 def generate_launch_description():
     pkg_path = FindPackageShare("pendulum_control").find("pendulum_control")
@@ -102,10 +103,19 @@ def generate_launch_description():
         executable="control",
         name="pid_controller",
         parameters=[{
-            "pos" : 3.14,
-            "kp" : 1.0,
-            "ki" : 0.5,
-            "kd" : 0.1,
+            "pos" : math.pi,
+            "kp" : 15.0,
+            "ki" : 0.0,
+            "kd" : 1.0,
+            "km" : 0.9,
+            "kmd" : 0.4,
+            "mu" : 65.0,
+            "swing_threshold" : math.pi / 8.0,
+            "mp" : 0.024,
+            "Lp" : 0.129,
+            "Jp" : 1.33e-4,
+            "command_sign": -1.0,
+            "max_command": 2.0,
         }],
         arguments=["--ros-args", "-p", "use_sim_time:=true"]
     )
