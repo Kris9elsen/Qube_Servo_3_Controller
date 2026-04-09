@@ -54,7 +54,7 @@ private:
 
     double p_term = kp_ * error;
 
-    integral_ = std::clamp(integral_ + (error + prev_error_) * T / 2.0, -1, 1);
+    integral_ = std::clamp(integral_ + (error + prev_error_) * T / 2.0, -1.0, 1.0);
     double i_term = ki_ * integral_;
 
     double d_term = kd_ * -pendulum_vel;
