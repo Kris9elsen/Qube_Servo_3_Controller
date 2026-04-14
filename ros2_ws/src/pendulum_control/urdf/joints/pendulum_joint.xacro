@@ -11,7 +11,7 @@
 
       <axis xyz="0 0 1"/>
 
-      <limit effort="2" velocity="20"/>
+      <limit effort="100" velocity="20"/>
       <dynamics damping="${pendulum_damping}" friction="${pendulum_friction}"/>
 
     </joint>
