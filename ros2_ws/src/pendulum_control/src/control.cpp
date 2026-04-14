@@ -8,8 +8,8 @@ public:
   PID_Controller() : Node("pid_controller") {
     // Simulation
     simulation_ = this->declare_parameter("simulation", false);
-    Kt_ = this->declare_parameter("Kt_", 0.09408);
-    Kb_ = this->declare_parameter("Kb_t", 0.09408);
+    Kt_ = this->declare_parameter("Kt_", 0.04704);
+    Kb_ = this->declare_parameter("Kb_t", 0.04704);
     R_ = this->declare_parameter("R_", 8.65);
 
     // Balance (LQR + PID) gains
