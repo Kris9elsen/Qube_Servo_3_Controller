@@ -121,8 +121,8 @@ private:
       integral_ = 0.0; // reset integrator so it doesn't wind up
       prev_error_ = 0.0;
 
-      double m_term = -km_ * motor_pos;
-      double md_term = -kmd_ * motor_vel;
+      double m_term = km_ * motor_pos;
+      double md_term = kmd_ * motor_vel / 100.0;
 
       double E = compute_energy(alpha, alpha_dot);
       // E_ref = 0 (upright equilibrium), so error = E - 0 = E
