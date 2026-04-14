@@ -8,8 +8,8 @@
   <xacro:property name="rotor_radius" value="0.00325"/>
   <xacro:property name="rotor_height" value="0.0104"/>
   <xacro:property name="rotor_mass" value="0.095"/>
-  <xacro:property name="rotor_friction" value="0"/>
-  <xacro:property name="rotor_damping" value="0.0001"/>
+  <xacro:property name="rotor_friction" value="0.0"/>
+  <xacro:property name="rotor_damping" value="0.001486"/>
 
   <xacro:property name="pendulum_radius" value="0.0048"/>
   <xacro:property name="pendulum_length" value="0.129"/>

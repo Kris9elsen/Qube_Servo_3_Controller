@@ -26,12 +26,12 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="0.0106"/>
        <inertia
-          ixx="1.4e-6"
+          ixx="0.001486"
           ixy="0" 
           ixz="0"
-          iyy="1.4e-6"
+          iyy="0.001486"
           iyz="0"
-          izz="1.4e-6"/>
+          izz="0.001486"/>
       </inertial>
     </link>
   </xacro:macro>
