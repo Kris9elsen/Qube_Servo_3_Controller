@@ -110,7 +110,7 @@ def generate_launch_description():
             "kd" : 1.0,
             "km" : 0.9,
             "kmd" : 0.4,
-            "mu" : 150.0,
+            "mu" : 65.0,
             "swing_threshold" : math.pi / 8.0,
             "mp" : 0.024,
             "Lp" : 0.129,
