@@ -10,7 +10,7 @@ public:
     simulation_ = this->declare_parameter("simulation", false);
     Kt_ = this->declare_parameter("Kt_", 0.0422);
     Kb_ = this->declare_parameter("Kb_t", 0.0422);
-    R_ = this->declare_parameter("R_", 7.5);
+    R_ = this->declare_parameter("R_", 8.65);
 
     // Balance (LQR + PID) gains
     kp_ = this->declare_parameter("kp", 10.0);
@@ -121,8 +121,8 @@ private:
       integral_ = 0.0; // reset integrator so it doesn't wind up
       prev_error_ = 0.0;
 
-      double m_term = simulation_ ? -km_ * motor_pos : km_ * motor_pos;
-      double md_term = simulation_ ? -kmd_ * motor_vel : kmd_ * motor_vel / 100.0;
+      double m_term = simulation_ ? km_ * motor_pos : km_ * motor_pos;
+      double md_term = simulation_ ? kmd_ * motor_vel : kmd_ * motor_vel / 100.0;
 
       double E = compute_energy(alpha, alpha_dot);
       // E_ref = 0 (upright equilibrium), so error = E - 0 = E

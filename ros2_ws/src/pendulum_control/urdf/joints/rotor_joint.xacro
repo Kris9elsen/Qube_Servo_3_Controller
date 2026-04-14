@@ -11,7 +11,7 @@
 
       <axis xyz="0 0 1"/>
 
-      <limit effort="100" velocity="20" lower="-2.35619" upper="2.35619"/>
+      <limit effort="100" velocity="200" lower="-2.35619" upper="2.35619"/>
 
       <dynamics damping="${rotor_damping}" friction="${rotor_friction}"/>
 
