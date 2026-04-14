@@ -115,7 +115,7 @@ def generate_launch_description():
             "mp" : 0.024,
             "Lp" : 0.129,
             "Jp" : 1.33e-4,
-            "command_sign": 1.0,
+            "command_sign": -1.0,
             "max_command": 10.0,
         }],
         arguments=["--ros-args", "-p", "use_sim_time:=true"]
