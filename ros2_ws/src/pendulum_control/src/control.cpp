@@ -116,6 +116,7 @@ private:
       voltage = p_term + i_term + d_term + m_term + md_term;
 
       prev_error_ = error;
+      RCLCPP_INFO(get_logger(), "%s", ":pid:");
     } else {
       // ── SWING-UP MODE: energy pumping ───────────────────────────────────
       integral_ = 0.0; // reset integrator so it doesn't wind up
@@ -128,6 +129,8 @@ private:
       // E_ref = 0 (upright equilibrium), so error = E - 0 = E
       voltage = -mu_ * std::copysign(1.0, alpha_dot * std::cos(alpha)) * E +
                 m_term + md_term;
+
+      RCLCPP_INFO(get_logger(), "%s", ":swingup:");
     }
 
     voltage *= command_sign_;
