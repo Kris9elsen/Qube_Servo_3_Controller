@@ -76,7 +76,7 @@ void QubeServo3Driver::declareParameters()
     this->declare_parameter<std::string>("board_identifier", "0");
     this->declare_parameter<double>("update_rate", 1000.0);
     this->declare_parameter<std::vector<std::string>>("joint_names", {"motor", "pendulum"});
-    this->declare_parameter<double>("encoder_resolution", 4096.0);         // motor encoder counts/rev
+    this->declare_parameter<double>("encoder_resolution", 2048.0);         // motor encoder counts/rev
     this->declare_parameter<double>("pendulum_encoder_resolution", 2048.0); // pendulum encoder counts/rev
     this->declare_parameter<double>("max_effort", 1.5);
     this->declare_parameter<double>("effort_to_voltage", 1.0);
