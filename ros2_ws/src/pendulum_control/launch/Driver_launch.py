@@ -60,7 +60,7 @@ def generate_launch_description():
 
     pid_control_node = Node(
         package="pendulum_control",
-        executable="control",
+        executable="pid_control",
         name="pid_controller",
         parameters=[{
             "pos": 3.14159,
