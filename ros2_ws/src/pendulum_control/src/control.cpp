@@ -126,6 +126,7 @@ private:
     voltage = std::clamp(voltage, -max_command_, max_command_);
 
     std_msgs::msg::Float64MultiArray effort_msg;
+    RCLCPP_INFO(this->get_logger(), "Publishing effort(voltage): %f", voltage);
     effort_msg.data.push_back(voltage);
     effort_pub_->publish(effort_msg);
   }
