@@ -7,11 +7,11 @@
       <parent link="rotor_link"/>
       <child link="pendulum_link"/>
 
-      <origin xyz="0 0 0" rpy="0 1.5708 0"/>
-
+    <origin xyz="0.045427 0 0" rpy="0 0 0"/>
+    
       <axis xyz="0 0 1"/>
 
-      <limit effort="100" velocity="20"/>
+      <limit effort="2" velocity="20"/>
       <dynamics damping="${pendulum_damping}" friction="${pendulum_friction}"/>
 
     </joint>

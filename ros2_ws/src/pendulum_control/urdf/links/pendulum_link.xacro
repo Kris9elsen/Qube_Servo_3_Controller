@@ -25,15 +25,15 @@
 
       <!-- Inertia -->
      <inertial>
-        <origin xyz="0.0130 0 0.0511" rpy="0 0 0"/>
+      <origin xyz="0.045427 0 -0.0113445" rpy="0 0 0"/>
         <mass value="0.119"/>
         <inertia
-          ixx="9.20e-5"
-          ixy="0"
-          ixz="-5.25e-5"
-          iyy="2.05e-4"
-          iyz="0"
-          izz="1.14e-4"/>
+        ixx="9.8995e-5"
+        ixy="0"
+        ixz="0"
+        iyy="9.8995e-5"
+        iyz="0"
+        izz="9.8995e-5"/>
      </inertial>
     </link>
   </xacro:macro>
