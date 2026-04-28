@@ -147,6 +147,10 @@ private:
   double set_point_;
   double integral_;
   double prev_error_;
+
+
+  double motor_const_;
+
   rclcpp::Time last_time_;
   // ROS interfaces
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
