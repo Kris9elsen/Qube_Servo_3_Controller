@@ -64,9 +64,9 @@ def generate_launch_description():
         name="pid_controller",
         parameters=[{
             "pos": 3.14159,
-            "kp":  15.0,
+            "kp":  30.0,
             "ki":  0.0,
-            "kd":  1.0,
+            "kd":  3.0,
             "km": 0.9,
             "kmd": 0.4,
             'mu':  65.0,   # swing-up gain, tune this
@@ -74,6 +74,7 @@ def generate_launch_description():
             'mp':  0.024,              # pendulum mass [kg]
             'Lp':  0.129,              # CoM half-length [m]
             'Jp':  1.33e-4,            # moment of inertia [kg·m²]
+            'motor_const': 0.04704,      # motor torque constant [N·m/V]
         }]
     )
 
