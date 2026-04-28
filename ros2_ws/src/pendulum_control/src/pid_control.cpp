@@ -26,6 +26,9 @@ public:
     Lp_ = this->declare_parameter("Lp", 0.129);   // half-length to CoM [m]
     Jp_ = this->declare_parameter("Jp", 1.33e-4); // moment of inertia [kg·m²]
 
+    motor_const_ = this->declare_parameter("motor_const", 0.04704); // motor torque constant [N·m/V]
+
+
     set_point_ = this->declare_parameter("pos", 0.0); // arm angle setpoint
 
     integral_ = 0.0;
@@ -102,7 +105,10 @@ private:
       double m_term = -km_ * motor_pos;
       double md_term = -kmd_ * motor_vel;
 
-      voltage = p_term + i_term + d_term + m_term + md_term;
+      // back_emf addition since it is disregarded in controller gains tuning
+      double back_emf = motor_const_ * motor_vel;
+
+      voltage = p_term + i_term + d_term + m_term + md_term + back_emf;
 
       prev_error_ = error;
     }

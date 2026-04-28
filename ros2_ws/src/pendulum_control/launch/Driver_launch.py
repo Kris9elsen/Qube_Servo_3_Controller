@@ -74,6 +74,7 @@ def generate_launch_description():
             'mp':  0.024,              # pendulum mass [kg]
             'Lp':  0.129,              # CoM half-length [m]
             'Jp':  1.33e-4,            # moment of inertia [kg·m²]
+            'motor_const': 0.04704,      # motor torque constant [N·m/V]
         }]
     )
 
