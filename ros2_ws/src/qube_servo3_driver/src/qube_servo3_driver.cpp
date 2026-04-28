@@ -383,6 +383,7 @@ void QubeServo3Driver::publishDiagnostics()
 
     addKV("Motor Position (rad)",    std::to_string(state_.motor_position));
     addKV("Pendulum Position (rad)", std::to_string(state_.pendulum_position));
+    addKV("Pendulum Velocity (rad/s)", std::to_string(state_.pendulum_velocity));
     addKV("Motor Velocity (rad/s)",  std::to_string(state_.motor_velocity));
     addKV("Motor Current (A)",       std::to_string(state_.motor_current));
     addKV("Motor Voltage (V)",       std::to_string(state_.motor_voltage));
