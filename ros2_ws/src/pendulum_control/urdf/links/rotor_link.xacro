@@ -16,15 +16,15 @@
       </visual>
 
       <!-- Collision -->
-      <Collision>
+      <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mesh filename="pakcage://pendulum_control/urdf/mesh/rotor.stl" scale="0.001 0.001 0.001"/>
-      </Collision>
+        <mesh filename="package://pendulum_control/urdf/mesh/rotor.stl" scale="0.001 0.001 0.001"/>
+      </collision>
 
       <!-- Inertia -->
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="0.0106"/>
+        <mass value="${rotor_mass}"/>
        <inertia
           ixx="0.0003716"
           ixy="0" 
