@@ -67,8 +67,8 @@ def generate_launch_description():
             "kp":  30.0,
             "ki":  0.0,
             "kd":  3.0,
-            "km": 0.9,
-            "kmd": 0.4,
+            "km": 0.09,
+            "kmd": 0.04,
             'mu':  65.0,   # swing-up gain, tune this
             'swing_threshold': 3.14159 / 8.0,  # ~10 deg, switch point
             'mp':  0.024,              # pendulum mass [kg]

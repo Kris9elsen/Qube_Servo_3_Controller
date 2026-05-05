@@ -28,7 +28,6 @@ public:
 
     motor_const_ = this->declare_parameter("motor_const", 0.04704); // motor torque constant [N·m/V]
 
-
     set_point_ = this->declare_parameter("pos", 0.0); // arm angle setpoint
 
     integral_ = 0.0;
@@ -93,22 +92,26 @@ private:
 
     if (std::abs(alpha) <= swing_threshold_)
     {
+      // Motor state feedback (damps arm oscillation)
+      double m_term = -km_ * motor_pos;
+      double md_term = -kmd_ * motor_vel;
+
+
+      double set_point_term = m_term + md_term;
+
+
       // PID on pendulum angle (alpha = 0 at upright)
-      double error = 0.0 - alpha; // want alpha = 0 (upright)
+      double error = set_point_term - alpha; // want alpha = 0 (upright)
       double p_term = kp_ * error;
       integral_ = std::clamp(
           integral_ + (error + prev_error_) * T / 2.0, -1.0, 1.0);
       double i_term = ki_ * integral_;
       double d_term = kd_ * -alpha_dot;
 
-      // Motor state feedback (damps arm oscillation)
-      double m_term = -km_ * motor_pos;
-      double md_term = -kmd_ * motor_vel;
-
       // back_emf addition since it is disregarded in controller gains tuning
       double back_emf = motor_const_ * motor_vel;
 
-      voltage = p_term + i_term + d_term + m_term + md_term + back_emf;
+      voltage = p_term + i_term + d_term + back_emf;
 
       prev_error_ = error;
     }
@@ -147,7 +150,6 @@ private:
   double set_point_;
   double integral_;
   double prev_error_;
-
 
   double motor_const_;
 
