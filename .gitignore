@@ -4,3 +4,4 @@ build/
 install/
 log/
 equations/udledning2.asv
+.venv/
