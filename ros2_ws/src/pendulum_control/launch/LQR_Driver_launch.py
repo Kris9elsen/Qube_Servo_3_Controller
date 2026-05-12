@@ -64,10 +64,10 @@ def generate_launch_description():
         name="lqr_controller",
         parameters=[{
             "pos": 3.14,
-            "k1":  1.2, 
-            "k2":  35.2,
-            "k3":  0.8,
-            "k4":  1.0,
+            "k1":  2.2, 
+            "k2":  25.6,
+            "k3":  0.7,
+            "k4":  2.4,
             "k5": 0.0,
             'mu':  60.0,   # swing-up gain, tune this
             'swing_threshold': 3.14159 / 8.0,  # ~10 deg, switch point

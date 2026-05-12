@@ -48,7 +48,7 @@ QubeServo3Driver::QubeServo3Driver(const rclcpp::NodeOptions & options)
     
     if (enable_diagnostics_) {
         diagnostic_timer_ = this->create_wall_timer(
-            1s, std::bind(&QubeServo3Driver::publishDiagnostics, this));
+            std::chrono::duration<double>(1.0 / update_rate_), std::bind(&QubeServo3Driver::publishDiagnostics, this));
     }
     
 
