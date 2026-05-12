@@ -48,7 +48,7 @@ QubeServo3Driver::QubeServo3Driver(const rclcpp::NodeOptions & options)
     
     if (enable_diagnostics_) {
         diagnostic_timer_ = this->create_wall_timer(
-            1s, std::bind(&QubeServo3Driver::publishDiagnostics, this));
+            std::chrono::duration<double>(1.0 / update_rate_), std::bind(&QubeServo3Driver::publishDiagnostics, this));
     }
     
 
@@ -213,7 +213,7 @@ void QubeServo3Driver::writeVoltage(double voltage)
     voltage = std::clamp(voltage, -max_effort_, max_effort_);
     
     t_double voltages[1] = {voltage};
-    RCLCPP_INFO(this->get_logger(), "Writting voltage: %f V", voltage);
+    
     t_error result = hil_write_analog(card_, dac_channels_, 1, voltages);
     if (result != 0) {
         handleQuanserError("hil_write_analog", result);

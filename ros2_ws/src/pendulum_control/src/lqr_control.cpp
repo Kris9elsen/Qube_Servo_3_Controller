@@ -47,7 +47,7 @@ private:
   // Wrap pendulum angle: 0 = upright, ±π = hanging
   double wrap_pendulum(double raw)
   {
-    double a = raw - set_point_;
+    double a = raw - set_point_ ;
     a = std::fmod(a + M_PI, 2.0 * M_PI);
     if (a < 0) a += 2.0 * M_PI;
     return a - M_PI;
@@ -94,18 +94,20 @@ private:
       //
       // Control law: u = -K * x
       //   = -(k1*arm_error + k2*alpha + k3*arm_vel + k4*alpha_dot + k5*integral)
-
-      double arm_error = motor_pos - set_point_;
+      double pendulum_error = -alpha;
+      double arm_error = 0 -motor_pos;
+      double motor_vel_error   = -motor_vel;
+      double alpha_dot_error   = -alpha_dot;
 
       // Integrate arm position error (trapezoidal, with anti-windup clamp)
       arm_integral_ = std::clamp(
           arm_integral_ + arm_error * T,
           -2.0, 2.0);
 
-      voltage = -(k1_ * arm_error
-                + k2_ * alpha
-                + k3_ * motor_vel
-                + k4_ * alpha_dot
+      voltage = (k1_ * arm_error
+                + k2_ * pendulum_error
+                + k3_ * motor_vel_error
+                + k4_ * alpha_dot_error
                 + k5_ * arm_integral_);
     }
     else

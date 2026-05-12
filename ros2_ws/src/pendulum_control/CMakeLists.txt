@@ -20,13 +20,29 @@ target_include_directories(pid_control PUBLIC
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 target_compile_features(pid_control PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
+add_executable(lqr_control src/lqr_control.cpp)
+target_include_directories(lqr_control PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+target_compile_features(lqr_control PUBLIC c_std_99 cxx_std_17)  #
+
+
 ament_target_dependencies(pid_control
   rclcpp
   sensor_msgs
   std_msgs
 )
 
+ament_target_dependencies(lqr_control
+  rclcpp
+  sensor_msgs
+  std_msgs
+)
+
 install(TARGETS pid_control
+  DESTINATION lib/${PROJECT_NAME})
+
+install(TARGETS lqr_control
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY
