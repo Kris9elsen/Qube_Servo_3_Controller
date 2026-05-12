@@ -97,25 +97,24 @@ def generate_launch_description():
         arguments=["-d", rviz_config_file]
     )
 
-    # PID Control Node
-    pid_control_node = Node(
+    # LQR Control Node
+    lqr_control_node = Node(
         package="pendulum_control",
-        executable="control",
-        name="pid_controller",
+        executable="lqr_control",
+        name="lqr_controller",
         parameters=[{
-            "pos" : math.pi,
-            "kp" : 15.0,
-            "ki" : 0.0,
-            "kd" : 1.0,
-            "km" : 0.9,
-            "kmd" : 0.4,
-            "mu" : 65.0,
-            "swing_threshold" : math.pi / 8.0,
-            "mp" : 0.024,
-            "Lp" : 0.129,
-            "Jp" : 1.33e-4,
-            "command_sign": 1.0,
-            "max_command": 10.0,
+            "pos": 3.14,
+            "k1":  2.2, 
+            "k2":  25.6,
+            "k3":  0.7,
+            "k4":  2.4,
+            "k5": 0.0,
+            'mu':  60.0,   # swing-up gain, tune this
+            'swing_threshold': 3.14159 / 8.0,  # ~10 deg, switch point
+            'mp':  0.024,              # pendulum mass [kg]
+            'Lp':  0.129,              # CoM half-length [m]
+            'Jp':  1.33e-4,            # moment of inertia [kg·m²]
+            'motor_const': 0.04704,      # motor torque constant [N·m/V]
         }],
         arguments=["--ros-args", "-p", "use_sim_time:=true"]
     )
@@ -131,6 +130,6 @@ def generate_launch_description():
         TimerAction(period=4.0, actions=[spawn_robot]),
         TimerAction(period=10.0, actions=[joint_state_broadcaster_spawner]),
         TimerAction(period=12.0, actions=[effort_controller_spawner]),
-        TimerAction(period=13.0, actions=[pid_control_node]),
+        TimerAction(period=13.0, actions=[lqr_control_node]),
         rviz_node,
     ])
