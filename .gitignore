@@ -8,3 +8,4 @@ equations/udledning2.asv
 venv/
 *.csv
 *.csv#
+.vscode/
