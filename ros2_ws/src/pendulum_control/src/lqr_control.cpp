@@ -1,6 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "std_msgs/msg/string.hpp"
 #include <cmath>
 
 class LQR_Controller : public rclcpp::Node
@@ -23,7 +24,8 @@ public:
     swing_threshold_ = this->declare_parameter("swing_threshold", 0.175); // ~10 deg
     command_sign_    = this->declare_parameter("command_sign", 1.0);
     max_command_     = std::abs(this->declare_parameter("max_command", 10.0));
-
+    simulated_       = this->declare_parameter("simulated", false);
+    motor_const_     = this->declare_parameter("motor_const", 1.0); // N·m/V, adjust if using different motor or gearing
     // Pendulum physical parameters
     mp_ = this->declare_parameter("mp", 0.024);    // pendulum mass [kg]
     Lp_ = this->declare_parameter("Lp", 0.129);    // distance to CoM [m]
@@ -41,6 +43,8 @@ public:
 
     effort_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
         "/effort_controller/commands", 10);
+    control_state_pub_ = this->create_publisher<std_msgs::msg::String>(
+        "/controller_state", 10);
   }
 
 private:
@@ -75,17 +79,31 @@ private:
 
     const double T = 0.001; // sample period [s]
 
-    double motor_pos   = msg->position[0];
-    double pend_raw    = msg->position[1];
-    double motor_vel   = msg->velocity[0];
-    double alpha_dot   = msg->velocity[1];
+    double motor_pos;
+    double pend_raw;
+    double motor_vel;
+    double alpha_dot;
+
+    if (simulated_) {
+      pend_raw  = msg->position[0];
+      motor_pos = -msg->position[1];
+      alpha_dot = msg->velocity[0];
+      motor_vel = -msg->velocity[1];
+    } else {
+      motor_pos = msg->position[0];
+      pend_raw  = msg->position[1];
+      motor_vel = msg->velocity[0];
+      alpha_dot = msg->velocity[1];
+    }
 
     double alpha = wrap_pendulum(pend_raw);
 
     double voltage = 0.0;
+    std::string controller_state;
 
     if (std::abs(alpha) <= swing_threshold_)
     {
+      controller_state = "balance";
       // ── BALANCE MODE: full-state LQR ─────────────────────────────────────
       //
       // State vector x = [arm_error, alpha, arm_vel, alpha_dot, arm_integral]
@@ -112,6 +130,7 @@ private:
     }
     else
     {
+      controller_state = "swing_up";
       // ── SWING-UP MODE: energy pumping ────────────────────────────────────
       arm_integral_ = 0.0; // reset integrator
 
@@ -120,12 +139,16 @@ private:
       voltage = -mu_ * std::copysign(1.0, alpha_dot * std::cos(alpha)) * E;
     }
 
-    voltage *= command_sign_;
+    voltage *= command_sign_ * motor_const_;
     voltage  = std::clamp(voltage, -max_command_, max_command_);
 
     std_msgs::msg::Float64MultiArray effort_msg;
     effort_msg.data.push_back(voltage);
     effort_pub_->publish(effort_msg);
+
+    std_msgs::msg::String state_msg;
+    state_msg.data = controller_state;
+    control_state_pub_->publish(state_msg);
   }
 
   // LQR gains
@@ -137,10 +160,13 @@ private:
   // State
   double set_point_;
   double arm_integral_;
+  bool simulated_;
+  double motor_const_;
   rclcpp::Time last_time_;
   // ROS interfaces
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr effort_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr control_state_pub_;
 };
 
 int main(int argc, char *argv[])

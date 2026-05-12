@@ -109,12 +109,14 @@ def generate_launch_description():
             "k3":  0.7,
             "k4":  2.4,
             "k5": 0.0,
-            'mu':  60.0,   # swing-up gain, tune this
+            'mu':  10.0,   # swing-up gain, tune this
             'swing_threshold': 3.14159 / 8.0,  # ~10 deg, switch point
             'mp':  0.024,              # pendulum mass [kg]
             'Lp':  0.129,              # CoM half-length [m]
             'Jp':  1.33e-4,            # moment of inertia [kg·m²]
             'motor_const': 0.04704,      # motor torque constant [N·m/V]
+            'command_sign': 1.0,     # sign to match positive voltage to positive torque, adjust if needed
+            'simulated': True,         # whether to use simulated time
         }],
         arguments=["--ros-args", "-p", "use_sim_time:=true"]
     )

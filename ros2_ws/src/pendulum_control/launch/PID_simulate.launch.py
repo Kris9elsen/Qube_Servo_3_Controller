@@ -100,22 +100,24 @@ def generate_launch_description():
     # PID Control Node
     pid_control_node = Node(
         package="pendulum_control",
-        executable="control",
+        executable="pid_control",
         name="pid_controller",
         parameters=[{
             "pos" : math.pi,
-            "kp" : 15.0,
+            "kp" : 30.0,
             "ki" : 0.0,
-            "kd" : 1.0,
+            "kd" : 3.0,
             "km" : 0.9,
             "kmd" : 0.4,
-            "mu" : 65.0,
+            "mu" : 10.0,
             "swing_threshold" : math.pi / 8.0,
             "mp" : 0.024,
             "Lp" : 0.129,
             "Jp" : 1.33e-4,
             "command_sign": 1.0,
             "max_command": 10.0,
+            'motor_const': 0.04704,
+            'simulated': True
         }],
         arguments=["--ros-args", "-p", "use_sim_time:=true"]
     )
